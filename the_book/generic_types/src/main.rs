@@ -23,6 +23,16 @@ fn main() {
     println!("float_point.distance_from_origin == {}", float_point.distance_from_origin());
     let int_float_point = MultivalPoint{x:5, y:10.0};
     println!("int_float_point == {:?}", int_float_point);
+
+    let point_int = PointMixin{x:5, y:10};
+    let point_char = PointMixin{x:'x', y:'y'};
+    let point_mixin = point_int.mixin(point_char);
+    println!("point_mixin == {:?}", point_mixin);
+    
+    let option_i32 = Option_i32::Some(5);
+    println!("option_i32 == {:?}", option_i32);
+    let option_f64 = Option_f64::Some(5.0);
+    println!("option_f64 == {:?}", option_f64);
 }
 
 fn get_largest_i32(i32_list: &[i32]) -> &i32 {
@@ -61,6 +71,21 @@ struct Point<T> {
     y: T,
 }
 
+#[derive(Debug)]
+struct PointMixin<X1, Y1> {
+    x: X1,
+    y: Y1,
+}
+
+impl<X1, Y1> PointMixin<X1, Y1> {
+    fn mixin<X2, Y2>(self, other: PointMixin<X2, Y2>) -> PointMixin<X1, Y2> {
+        return PointMixin{
+            x:self.x,
+            y:other.y
+        };
+    }
+}
+
 impl<T> Point<T> {
     fn x(&self) -> &T {
         // get the value of the x attribute of Point
@@ -91,3 +116,16 @@ enum Result<T, E> {
     Ok(T),
     Err(E),
 }
+
+#[derive(Debug)]
+enum Option_i32 {
+    Some(i32),
+    None,
+}
+
+#[derive(Debug)]
+enum Option_f64 {
+    Some(f64),
+    None,
+}
+
