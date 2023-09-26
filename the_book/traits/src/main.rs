@@ -1,4 +1,4 @@
-use traits::{NewsArticle, Summary, Tweet};
+use traits::{NewsArticle, Summary, Tweet, Pair};
 fn main() {
     let tweet = Tweet {
         username: String::from("twitter_user"),
@@ -21,5 +21,10 @@ fn main() {
     println!("{}", newsarticle.summarize());
     println!("{}", newsarticle.default_behavior());
     println!("{}", newsarticle.read_more());
+
+    let p1 = Pair{x:2, y:1};
+    p1.cmp_display();
+    let p2 = Pair{x:1, y:3};
+    p2.cmp_display();
 }
 
