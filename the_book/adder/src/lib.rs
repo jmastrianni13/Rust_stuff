@@ -1,5 +1,9 @@
+pub fn add_two(op: i32) -> i32 {
+    return op + 2;
+}
+
 pub fn add(left: usize, right: usize) -> usize {
-    left + right
+    return left + right;
 }
 
 #[cfg(test)]
@@ -13,6 +17,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn another() {
         panic!("Make this test fail");
     }
