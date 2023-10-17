@@ -12,12 +12,15 @@ fn main() {
         io::stdin()
             .read_line(&mut guess)
             .expect("Failed to read line");
-        let guess: u32 = match guess.trim().parse() {
-            Ok(guess_u32) => guess_u32,
+        let guess: i32 = match guess.trim().parse() {
+            Ok(guess_i32) => guess_i32,
             Err(_guess_err) => continue,
         };
         println!("You guessed: {guess}");
-
+        if guess < 1 || guess > 100 {
+            println!("The secret number will be between 1 and 100.");
+            continue;
+        }
         match guess.cmp(&secret_number) {
             Ordering::Less => println!("Too small!"),
             Ordering::Greater => println!("Too big!"),
