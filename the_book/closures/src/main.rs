@@ -1,3 +1,4 @@
+use std::thread;
 
 fn main() {
     let store = Inventory {
@@ -20,6 +21,7 @@ fn main() {
 
     immut_ref_closure();
     mut_ref_closure();
+    owner_closure();
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -75,3 +77,13 @@ fn mut_ref_closure() {
     borrows_mutably();
     println!("After calling closure: {:?}", list);
 }
+
+fn owner_closure() {
+    let list = vec![1, 2, 3];
+    println!("Before defining closure: {:?}", list);
+
+    thread::spawn(move || println!("From thread: {:?}", list))
+        .join()
+        .unwrap();
+}
+
