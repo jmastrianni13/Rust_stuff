@@ -19,6 +19,7 @@ fn main() {
     );
 
     immut_ref_closure();
+    mut_ref_closure();
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -65,3 +66,12 @@ fn immut_ref_closure() {
     println!("After calling closure: {:?}", list);
 }
 
+fn mut_ref_closure() {
+    let mut list = vec![1, 2, 3];
+    println!("Before defining closure: {:?}", list);
+
+    let mut borrows_mutably = || list.push(7);
+    // borrows_mutably currently has a mutable reference to list, so nothing else can borrow list
+    borrows_mutably();
+    println!("After calling closure: {:?}", list);
+}
