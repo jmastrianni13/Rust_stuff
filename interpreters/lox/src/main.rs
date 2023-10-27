@@ -59,6 +59,10 @@ fn run_prompt() -> Result<(), String> {
             Err(_) => return Err("count not read line".to_string()),
         }
         println!("got: {}", buffer);
+        match run(&buffer) {
+            Ok(_) => (),
+            Err(msg) => println!("{}", msg),
+        }
     }
 }
 
