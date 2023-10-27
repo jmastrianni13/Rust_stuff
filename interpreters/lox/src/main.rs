@@ -1,6 +1,6 @@
 use std::env;
 use std::fs;
-use std::io;
+use std::io::{self, BufRead, Write};
 use std::process;
 
 fn main() {
@@ -36,18 +36,30 @@ fn run_file(path: &str) -> Result<(), String> {
 }
 
 fn run_prompt() -> Result<(), String> {
-    print!("> ");
-    let mut buffer = String::new();
-    let stdin = io::stdin();
-    match stdin.read_line(&mut buffer) {
-        Ok(_) => (),
-        Err(_) => return Err("count not read line".to_string()),
+    while true {
+        print!("> ");
+        match io::stdout().flush() {
+            Ok(_) => (),
+            Err(_) => return Err("could not flush stdout".to_string()),
+        }
+
+        let mut buffer = String::new();
+        let stdin = io::stdin();
+        let mut handle = stdin.lock();
+        match handle.read_line(&mut buffer) {
+            Ok(n) => {
+                buffer = buffer.trim().to_string();
+                if buffer.len() == 0 {
+                    return Ok(());
+                }
+            }
+            Err(_) => return Err("count not read line".to_string()),
+        }
+        println!("got: {}", buffer);
     }
-    println!("got: {}", buffer);
     return Ok(());
 }
 
 fn run(contents: &str) -> Result<(), String> {
     return Err("not implemented".to_string());
 }
-
