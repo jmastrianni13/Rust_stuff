@@ -56,6 +56,7 @@ fn run_prompt() -> Result<(), String> {
                     return Ok(());
                 }
             }
+
             Err(_) => return Err("count not read line".to_string()),
         }
         println!("got: {}", buffer);
@@ -67,7 +68,7 @@ fn run_prompt() -> Result<(), String> {
 }
 
 fn run(contents: &str) -> Result<(), String> {
-    let scanner = Scanner::new(contents);
+    let mut scanner = Scanner::new(contents);
     let tokens = scanner.scan_tokens()?;
 
     for token in tokens {
