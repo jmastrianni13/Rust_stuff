@@ -60,10 +60,78 @@ impl Scanner {
             '+' => self.add_token(TokenType::Plus),
             ';' => self.add_token(TokenType::Semicolon),
             '*' => self.add_token(TokenType::Star),
+            '!' => {
+                let token = if self.char_match('=') {
+                    // !=
+                    TokenType::BangEqual
+                } else {
+                    TokenType::Bang
+                };
+                self.add_token(token);
+            },
+            '=' => {
+                let token = if self.char_match('=') {
+                    // !=
+                    TokenType::EqualEqual
+                } else {
+                    TokenType::Equal
+                };
+                self.add_token(token);
+            },
+            '<' => {
+                let token = if self.char_match('=') {
+                    // !=
+                    TokenType::LessEqual
+                } else {
+                    TokenType::Less
+                };
+                self.add_token(token);
+            },
+            '>' => {
+                let token = if self.char_match('=') {
+                    // !=
+                    TokenType::GreaterEqual
+                } else {
+                    TokenType::Greater
+                };
+                self.add_token(token);
+            },
+            '/' => {
+                if self.char_match('/') {
+                    loop {
+                        if self.peek() == '\n' || self.is_at_end() {
+                            break;
+                        }
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(TokenType::Slash);
+                }
+            },
             _ => return Err(format!("unrecognized char at line {}: {}", self.line, c))
         }
 
         todo!()
+    }
+
+    fn peek(self: &Self) -> char {
+        if self.is_at_end() {
+            return '\0'; // null character
+        } else {
+            return self.source.as_bytes()[self.current] as char
+        }
+    }
+
+    fn char_match(self: &mut Self, ch: char) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+        if self.source.as_bytes()[self.current] as char != ch {
+            return false;
+        } else {
+            self.current += 1;
+            return true;
+        }
     }
 
     fn advance(self: &mut Self) -> char {
@@ -148,6 +216,7 @@ pub enum TokenType {
     Bang,
     BangEqual,
     Equal,
+    EqualEqual,
     Greater,
     GreaterEqual,
     Less,
