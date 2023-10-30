@@ -108,10 +108,12 @@ impl Scanner {
                     self.add_token(TokenType::Slash);
                 }
             },
+            ' ' | '\r' | '\t' => {},
+            '\n' => self.line += 1,
             _ => return Err(format!("unrecognized char at line {}: {}", self.line, c))
         }
 
-        todo!()
+        return Ok(());
     }
 
     fn peek(self: &Self) -> char {
@@ -197,7 +199,7 @@ pub enum LiteralValue {
     IdentifierVal(String)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     // single-character tokens
     LeftParen,
@@ -253,4 +255,44 @@ impl std::fmt::Display for TokenType {
         write!(f, "{:?}", self)
     }
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn handle_one_char_tokens() {
+        let source = "(( )) }{";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens();
+
+        assert_eq!(scanner.tokens.len(), 7);
+        assert_eq!(scanner.tokens[0].token_type, TokenType::LeftParen);
+        assert_eq!(scanner.tokens[1].token_type, TokenType::LeftParen);
+        assert_eq!(scanner.tokens[2].token_type, TokenType::RightParen);
+        assert_eq!(scanner.tokens[3].token_type, TokenType::RightParen);
+        assert_eq!(scanner.tokens[4].token_type, TokenType::RightBrace);
+        assert_eq!(scanner.tokens[5].token_type, TokenType::LeftBrace);
+        assert_eq!(scanner.tokens[6].token_type, TokenType::Eof);
+    }
+
+    #[test]
+    fn handle_two_char_tokens() {
+        let source = "! != == >=";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens();
+
+        assert_eq!(scanner.tokens.len(), 5);
+        assert_eq!(scanner.tokens[0].token_type, TokenType::Bang);
+        assert_eq!(scanner.tokens[1].token_type, TokenType::BangEqual);
+        assert_eq!(scanner.tokens[2].token_type, TokenType::EqualEqual);
+        assert_eq!(scanner.tokens[3].token_type, TokenType::GreaterEqual);
+        assert_eq!(scanner.tokens[4].token_type, TokenType::Eof);
+    }
+}
+
+
+
 
