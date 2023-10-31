@@ -110,10 +110,37 @@ impl Scanner {
             },
             ' ' | '\r' | '\t' => {},
             '\n' => self.line += 1,
+            '"' => self.string()?,
             _ => return Err(format!("unrecognized char at line {}: {}", self.line, c))
         }
 
         return Ok(());
+    }
+
+    fn string(self: &mut Self) -> Result<(), String> {
+        // "some string wrapped in double quotes"
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance();
+        }
+
+        if self.is_at_end() {
+            return Err("Unterminated string".to_string());
+        }
+
+        self.advance();
+
+        let value = self.source.as_bytes()[self.start + 1..self.current]
+            .iter()
+            .map(|byt| *byt as char)
+            .collect::<String>();
+
+        self.add_token_lit(TokenType::String, Some(LiteralValue::StringValue(value)));
+
+        return Ok(());
+
     }
 
     fn peek(self: &Self) -> char {
@@ -290,6 +317,18 @@ mod tests {
         assert_eq!(scanner.tokens[2].token_type, TokenType::EqualEqual);
         assert_eq!(scanner.tokens[3].token_type, TokenType::GreaterEqual);
         assert_eq!(scanner.tokens[4].token_type, TokenType::Eof);
+    }
+
+    #[test]
+    fn handle_string_literal() {
+        let source = "\"ABC\"";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens();
+
+        assert_eq!(scanner.tokens.len(), 2);
+        assert_eq!(scanner.tokens[0].token_type, TokenType::String);
+        assert_eq!(scanner.tokens[1].token_type, TokenType::Eof);
+
     }
 }
 
