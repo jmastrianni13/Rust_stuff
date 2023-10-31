@@ -137,7 +137,7 @@ impl Scanner {
             .map(|byt| *byt as char)
             .collect::<String>();
 
-        self.add_token_lit(TokenType::String, Some(LiteralValue::StringValue(value)));
+        self.add_token_lit(TokenType::StringLit, Some(LiteralValue::StringValue(value)));
 
         return Ok(());
 
@@ -253,7 +253,7 @@ pub enum TokenType {
 
     // literals
     Identifier,
-    String,
+    StringLit,
     Number,
 
     // keywords
@@ -326,7 +326,7 @@ mod tests {
         scanner.scan_tokens();
 
         assert_eq!(scanner.tokens.len(), 2);
-        assert_eq!(scanner.tokens[0].token_type, TokenType::String);
+        assert_eq!(scanner.tokens[0].token_type, TokenType::StringLit);
         assert_eq!(scanner.tokens[1].token_type, TokenType::Eof);
 
     }
