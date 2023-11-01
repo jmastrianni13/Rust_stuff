@@ -1,3 +1,13 @@
+/// Adds two to the operand.
+///
+/// # Examples
+///
+/// ```
+/// let arg = 5;
+/// let answer = adder::add_two(arg);
+///
+/// assert_eq!(7, answer);
+/// ```
 pub fn add_two(op: i32) -> i32 {
     return op + 2;
 }
