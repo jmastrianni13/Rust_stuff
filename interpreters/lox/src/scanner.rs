@@ -289,7 +289,7 @@ mod tests {
     fn handle_one_char_tokens() {
         let source = "(( )) }{";
         let mut scanner = Scanner::new(source);
-        scanner.scan_tokens();
+        scanner.scan_tokens().unwrap();
 
         assert_eq!(scanner.tokens.len(), 7);
         assert_eq!(scanner.tokens[0].token_type, TokenType::LeftParen);
@@ -305,7 +305,7 @@ mod tests {
     fn handle_two_char_tokens() {
         let source = "! != == >=";
         let mut scanner = Scanner::new(source);
-        scanner.scan_tokens();
+        scanner.scan_tokens().unwrap();
 
         assert_eq!(scanner.tokens.len(), 5);
         assert_eq!(scanner.tokens[0].token_type, TokenType::Bang);
@@ -317,17 +317,48 @@ mod tests {
 
     #[test]
     fn handle_string_literal() {
+        //let source = r#""ABC""#; // just another way to have nested quotes
         let source = "\"ABC\"";
         let mut scanner = Scanner::new(source);
-        scanner.scan_tokens();
+        scanner.scan_tokens().unwrap();
 
         assert_eq!(scanner.tokens.len(), 2);
         assert_eq!(scanner.tokens[0].token_type, TokenType::StringLit);
         assert_eq!(scanner.tokens[1].token_type, TokenType::Eof);
+        match scanner.tokens[0].literal.as_ref().unwrap() {
+            LiteralValue::StringValue(val) => assert_eq!(val, "ABC"),
+            _ => panic!("Incorrect literal type"),
+        }
+    }
+
+    #[test]
+    fn handle_string_literal_not_term() {
+        //let source = r#""ABC"#; // just another way to have nested quotes
+        let source = "\"ABC";
+        let mut scanner = Scanner::new(source);
+        let result = scanner.scan_tokens();
+
+        match result {
+            Err(_) => (),
+            _ => panic!("unterminated string did not raise error"),
+        }
 
     }
+
+    #[test]
+    fn handle_string_literal_multi_line() {
+        let source = "\"ABC\ndef\n123\"";
+        let mut scanner = Scanner::new(source);
+        let result = scanner.scan_tokens();
+
+        assert_eq!(scanner.tokens.len(), 2);
+        assert_eq!(scanner.tokens[0].token_type, TokenType::StringLit);
+        assert_eq!(scanner.tokens[1].token_type, TokenType::Eof);
+        match scanner.tokens[0].literal.as_ref().unwrap() {
+            LiteralValue::StringValue(val) => assert_eq!(val, "ABC\ndef\n123"),
+            _ => panic!("Incorrect literal type"),
+        }
+    }
 }
-
-
 
 
