@@ -1,3 +1,6 @@
+use add_one;
+
 fn main() {
-    println!("Hello, world!");
+    let x = 10;
+    println!("Hello, world! {x} plus one is {}!", add_one::add_one(x));
 }
