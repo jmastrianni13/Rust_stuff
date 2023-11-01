@@ -36,10 +36,10 @@ impl Scanner {
 
         if errors.len() > 0 {
             let mut joined = "".to_string();
-            errors.iter().map(|msg| {
-                joined.push_str(&msg);
+            for error in errors {
+                joined.push_str(&error);
                 joined.push_str("\n");
-            });
+            };
             return Err(joined);
         }
 
