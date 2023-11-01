@@ -110,14 +110,14 @@ impl Scanner {
             },
             ' ' | '\r' | '\t' => {},
             '\n' => self.line += 1,
-            '"' => self.string()?,
+            '"' => self.string_lit()?,
             _ => return Err(format!("unrecognized char at line {}: {}", self.line, c))
         }
 
         return Ok(());
     }
 
-    fn string(self: &mut Self) -> Result<(), String> {
+    fn string_lit(self: &mut Self) -> Result<(), String> {
         // "some string wrapped in double quotes"
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
