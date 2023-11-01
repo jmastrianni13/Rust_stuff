@@ -132,12 +132,9 @@ impl Scanner {
 
         self.advance();
 
-        let value = self.source.as_bytes()[self.start + 1..self.current]
-            .iter()
-            .map(|byt| *byt as char)
-            .collect::<String>();
+        let value = &self.source[self.start + 1..self.current - 1];
 
-        self.add_token_lit(TokenType::StringLit, Some(LiteralValue::StringValue(value)));
+        self.add_token_lit(TokenType::StringLit, Some(LiteralValue::StringValue(value.to_string())));
 
         return Ok(());
 
@@ -147,7 +144,7 @@ impl Scanner {
         if self.is_at_end() {
             return '\0'; // null character
         } else {
-            return self.source.as_bytes()[self.current] as char
+            return self.source.chars().nth(self.current).unwrap();
         }
     }
 
@@ -155,7 +152,7 @@ impl Scanner {
         if self.is_at_end() {
             return false;
         }
-        if self.source.as_bytes()[self.current] as char != ch {
+        if self.source.chars().nth(self.current).unwrap() != ch {
             return false;
         } else {
             self.current += 1;
@@ -164,10 +161,10 @@ impl Scanner {
     }
 
     fn advance(self: &mut Self) -> char {
-        let c = self.source.as_bytes()[self.current];
+        let c = self.source.chars().nth(self.current).unwrap();
         self.current += 1;
 
-        return c as char;
+        return c;
     }
 
     fn add_token(self: &mut Self, token_type: TokenType) {
@@ -176,10 +173,9 @@ impl Scanner {
 
     fn add_token_lit(self: &mut Self, token_type: TokenType, literal: Option<LiteralValue>) {
         let mut text = "".to_string();
-        let bytes = self.source.as_bytes();
-        for i in self.start..self.current {
-            text.push(bytes[i] as char);
-        }
+        let lit = self.source[self.start..self.current]
+            .chars()
+            .map(|ch| text.push(ch));
 
         self.tokens.push(Token {
             token_type: token_type,
