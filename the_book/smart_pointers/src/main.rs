@@ -8,6 +8,9 @@ fn main() {
     println!("lisp_list = {:?}", lisp_list);
 
     demo_ref();
+
+    let m = MyBox::new(String::from("Rust"));
+    hello(&m);
 }
 
 fn get_box(x: i32) -> Box<i32> {
@@ -52,5 +55,9 @@ impl<T> Deref for MyBox<T> {
     fn deref(&self) -> &Self::Target {
         return &self.0;
     }
+}
+
+fn hello(name: &str) {
+    println!("Hello, {name}!");
 }
 
