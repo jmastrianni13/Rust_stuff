@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 fn is_digit(ch: char) -> bool {
     return ch as u8 >= '0' as u8 && ch as u8 <= '9' as u8;
 }
@@ -14,12 +16,35 @@ fn is_alpha_numeric(ch: char) -> bool {
     return is_alpha(ch) || is_digit(ch);
 }
 
+fn get_keywords_hashmap() -> HashMap<&'static str, TokenType> {
+    return HashMap::from ([
+                          ("and", TokenType::And),
+                          ("class", TokenType::Class),
+                          ("else", TokenType::Else),
+                          ("false", TokenType::False),
+                          ("for", TokenType::For),
+                          ("fun", TokenType::Fun),
+                          ("if", TokenType::If),
+                          ("nil", TokenType::Nil),
+                          ("or", TokenType::Or),
+                          ("print", TokenType::Print),
+                          ("return", TokenType::Return),
+                          ("super", TokenType::Super),
+                          ("this", TokenType::This),
+                          ("true", TokenType::True),
+                          ("var", TokenType::Var),
+                          ("while", TokenType::While)
+    ]);
+}
+
 pub struct Scanner {
     source: String,
     tokens: Vec<Token>,
     start: usize,
     current: usize,
     line: usize,
+
+    keywords: HashMap<&'static str, TokenType>,
 }
 
 impl Scanner {
@@ -30,6 +55,7 @@ impl Scanner {
             start: 0,
             current: 0,
             line: 1,
+            keywords: get_keywords_hashmap()
         }
     }
 
@@ -146,7 +172,12 @@ impl Scanner {
             self.advance();
         }
 
-        self.add_token(TokenType::Identifier);
+        let substring = &self.source[self.start..self.current];
+        if let Some(&token_type) = self.keywords.get(substring) {
+            self.add_token(token_type);
+        } else {
+            self.add_token(TokenType::Identifier);
+        }
 
     }
 
@@ -238,7 +269,7 @@ impl Scanner {
 
     fn add_token_lit(self: &mut Self, token_type: TokenType, literal: Option<LiteralValue>) {
         let mut text = "".to_string();
-        self.source[self.start..self.current]
+        let _ = self.source[self.start..self.current]
             .chars()
             .map(|ch| text.push(ch));
 
@@ -287,7 +318,7 @@ pub enum LiteralValue {
     IdentifierVal(String)
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum TokenType {
     // single-character tokens
     LeftParen,
@@ -414,7 +445,7 @@ mod tests {
     fn handle_string_literal_multi_line() {
         let source = "\"ABC\ndef\n123\"";
         let mut scanner = Scanner::new(source);
-        let result = scanner.scan_tokens();
+        let _result = scanner.scan_tokens();
 
         assert_eq!(scanner.tokens.len(), 2);
         assert_eq!(scanner.tokens[0].token_type, TokenType::StringLit);
@@ -467,6 +498,28 @@ mod tests {
 
     }
 
-}
+    #[test]
+    fn handle_keywords() {
+        let source = "var this_is_a_var = 12;\nwhile true { print 3 };";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
 
+        assert_eq!(scanner.tokens.len(), 13);
+        assert_eq!(scanner.tokens[0].token_type, TokenType::Var);
+        assert_eq!(scanner.tokens[1].token_type, TokenType::Identifier);
+        assert_eq!(scanner.tokens[2].token_type, TokenType::Equal);
+        assert_eq!(scanner.tokens[3].token_type, TokenType::NumberLit);
+        assert_eq!(scanner.tokens[4].token_type, TokenType::Semicolon);
+        assert_eq!(scanner.tokens[5].token_type, TokenType::While);
+        assert_eq!(scanner.tokens[6].token_type, TokenType::True);
+        assert_eq!(scanner.tokens[7].token_type, TokenType::LeftBrace);
+        assert_eq!(scanner.tokens[8].token_type, TokenType::Print);
+        assert_eq!(scanner.tokens[9].token_type, TokenType::NumberLit);
+        assert_eq!(scanner.tokens[10].token_type, TokenType::RightBrace);
+        assert_eq!(scanner.tokens[11].token_type, TokenType::Semicolon);
+        assert_eq!(scanner.tokens[12].token_type, TokenType::Eof);
+
+    }
+
+}
 
