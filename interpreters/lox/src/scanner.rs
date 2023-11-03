@@ -2,6 +2,18 @@ fn is_digit(ch: char) -> bool {
     return ch as u8 >= '0' as u8 && ch as u8 <= '9' as u8;
 }
 
+fn is_alpha(ch: char) -> bool {
+    let uch = ch as u8;
+
+    return (uch >= 'a' as u8 && uch <= 'z' as u8) ||
+        (uch >= 'A' as u8 && uch <= 'Z' as u8) ||
+        (ch == '_');
+}
+
+fn is_alpha_numeric(ch: char) -> bool {
+    return is_alpha(ch) || is_digit(ch);
+}
+
 pub struct Scanner {
     source: String,
     tokens: Vec<Token>,
@@ -117,7 +129,9 @@ impl Scanner {
             '"' => self.string_lit()?,
             c => {
                 if is_digit(c) {
-                    self.number_lit();
+                    self.number_lit()?;
+                } else if is_alpha(c) {
+                    self.identifier();
                 } else {
                     return Err(format!("unrecognized char at line {}: {}", self.line, c));
                 }
@@ -125,6 +139,15 @@ impl Scanner {
         }
 
         return Ok(());
+    }
+
+    fn identifier(self: &mut Self) {
+        while is_alpha_numeric(self.peek()) {
+            self.advance();
+        }
+
+        self.add_token(TokenType::Identifier);
+
     }
 
     fn number_lit(self: &mut Self) -> Result<(), String> {
@@ -427,6 +450,21 @@ mod tests {
             Some(LiteralValue::FValue(val)) => assert_eq!(val, 5.0),
             _ => panic!("Incorrect literal type"),
         }
+    }
+
+    #[test]
+    fn handle_identifiers() {
+        let source = "this_is_a_var = 12;";
+        let mut scanner = Scanner::new(source);
+        scanner.scan_tokens().unwrap();
+
+        assert_eq!(scanner.tokens.len(), 5);
+        assert_eq!(scanner.tokens[0].token_type, TokenType::Identifier);
+        assert_eq!(scanner.tokens[1].token_type, TokenType::Equal);
+        assert_eq!(scanner.tokens[2].token_type, TokenType::NumberLit);
+        assert_eq!(scanner.tokens[3].token_type, TokenType::Semicolon);
+        assert_eq!(scanner.tokens[4].token_type, TokenType::Eof);
+
     }
 
 }
