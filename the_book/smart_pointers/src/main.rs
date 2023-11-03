@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::rc::Rc;
 
 fn main() {
     let b = get_box(5);
@@ -26,6 +27,8 @@ fn main() {
     };
     println!("CustomSmartPointers created.");
     drop(c);
+
+    demo_rc();
 }
 
 fn get_box(x: i32) -> Box<i32> {
@@ -84,5 +87,36 @@ impl Drop for CustomSmartPointer {
     fn drop(&mut self) {
         println!("Dropping CustomSmartPointer with data `{}`!", self.data);
     }
+}
+
+#[derive(Debug)]
+enum RcLispList {
+    Cons(i32, Rc<RcLispList>),
+    Nil,
+}
+
+fn demo_rc() {
+    // commented out lines do not compile because a is moved when b is created
+    // let a = LispList::Cons(5, Box::new(LispList::Cons(10, Box::new(LispList::Nil))));
+    let a = Rc::new(RcLispList::Cons(5, Rc::new(RcLispList::Cons(10, Rc::new(RcLispList::Nil)))));
+    println!("count after creating a = {}", Rc::strong_count(&a));
+    // let b = LispList::Cons(3, Box::new(a));
+    let b = RcLispList::Cons(3, Rc::clone(&a));
+    println!("count after creating b = {}", Rc::strong_count(&a));
+    // let c = LispList::Cons(4, Box::new(a));
+    let c = RcLispList::Cons(4, Rc::clone(&a));
+    println!("count after creating c = {}", Rc::strong_count(&a));
+
+    {
+        let d = RcLispList::Cons(3, Rc::clone(&a));
+        println!("count after creating d = {}", Rc::strong_count(&a));
+    }
+
+    println!("count after destroying d = {}", Rc::strong_count(&a));
+
+    println!("a = {:?}", a);
+    println!("b = {:?}", b);
+    println!("c = {:?}", c);
+
 }
 
