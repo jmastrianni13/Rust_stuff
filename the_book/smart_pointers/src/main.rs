@@ -26,8 +26,11 @@ enum LispList {
 
 fn demo_ref() {
     let x = 5;
-    let y = &x;
+    let y = &x; // reference to x
+    let z = Box::new(x); // instance of Box<T> pointing to a copy of x
+
     assert_eq!(5, x);
     assert_eq!(5, *y);
+    assert_eq!(5, *z);
 }
 
