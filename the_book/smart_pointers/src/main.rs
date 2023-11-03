@@ -20,6 +20,12 @@ fn main() {
         data: String::from("other stuff"),
     };
     println!("CustomSmartPointers created.");
+
+    let e = CustomSmartPointer {
+        data: String::from("more stuff"),
+    };
+    println!("CustomSmartPointers created.");
+    drop(c);
 }
 
 fn get_box(x: i32) -> Box<i32> {
