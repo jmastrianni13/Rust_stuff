@@ -4,6 +4,8 @@ fn main() {
 
     let lisp_list = get_lisp_list();
     println!("lisp_list = {:?}", lisp_list);
+
+    demo_ref();
 }
 
 fn get_box(x: i32) -> Box<i32> {
@@ -20,5 +22,12 @@ fn get_lisp_list() -> LispList {
 enum LispList {
     Cons(i32, Box<LispList>),
     Nil,
+}
+
+fn demo_ref() {
+    let x = 5;
+    let y = &x;
+    assert_eq!(5, x);
+    assert_eq!(5, *y);
 }
 
