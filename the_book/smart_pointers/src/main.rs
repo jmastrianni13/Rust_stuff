@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::cell::RefCell;
 use std::rc::Rc;
 
 fn main() {
@@ -29,6 +30,9 @@ fn main() {
     drop(c);
 
     demo_rc();
+
+    demo_refcell_rc();
+
 }
 
 fn get_box(x: i32) -> Box<i32> {
@@ -95,6 +99,12 @@ enum RcLispList {
     Nil,
 }
 
+#[derive(Debug)]
+enum RefCellRcLispList {
+    Cons(Rc<RefCell<i32>>, Rc<RefCellRcLispList>),
+    Nil,
+}
+
 fn demo_rc() {
     // commented out lines do not compile because a is moved when b is created
     // let a = LispList::Cons(5, Box::new(LispList::Cons(10, Box::new(LispList::Nil))));
@@ -113,6 +123,32 @@ fn demo_rc() {
     }
 
     println!("count after destroying d = {}", Rc::strong_count(&a));
+
+    println!("a = {:?}", a);
+    println!("b = {:?}", b);
+    println!("c = {:?}", c);
+
+}
+
+fn demo_refcell_rc() {
+    let value = Rc::new(RefCell::new(5));
+    let a = Rc::new(RefCellRcLispList::Cons(
+            Rc::clone(&value),
+            Rc::new(RefCellRcLispList::Cons(
+                    Rc::new(RefCell::new(10)),
+                    Rc::new(RefCellRcLispList::Nil)
+                    )
+                )
+            )
+        );
+    let b = RefCellRcLispList::Cons(Rc::new(RefCell::new(3)), Rc::clone(&a));
+    let c = RefCellRcLispList::Cons(Rc::new(RefCell::new(4)), Rc::clone(&a));
+
+    println!("a = {:?}", a);
+    println!("b = {:?}", b);
+    println!("c = {:?}", c);
+
+    *value.borrow_mut() += 10;
 
     println!("a = {:?}", a);
     println!("b = {:?}", b);
