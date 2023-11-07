@@ -1,9 +1,11 @@
+use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
 fn main() {
-    demo_threads();
-    demo_move();
+    // demo_threads();
+    // demo_move();
+    demo_mpsc();
 }
 
 fn demo_threads() {
@@ -47,6 +49,18 @@ fn demo_move() {
     });
 
     handle.join().unwrap();
+}
 
+fn demo_mpsc() {
+    // mpsc stands for multi producer, single consumer
+    let (tx, rx) = mpsc::channel();
+
+    thread::spawn(move || {
+        let val = String::from("hi");
+        tx.send(val).unwrap();
+    });
+
+    let msg = rx.recv().unwrap();
+    println!("Got: {msg}");
 }
 
