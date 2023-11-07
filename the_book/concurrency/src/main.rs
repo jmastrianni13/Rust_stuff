@@ -3,6 +3,7 @@ use std::time::Duration;
 
 fn main() {
     demo_threads();
+    demo_move();
 }
 
 fn demo_threads() {
@@ -36,5 +37,16 @@ fn demo_threads() {
     }
 
     handle.join().unwrap() // main thread will wait for this thread to finish
+}
+
+fn demo_move() {
+    let v = vec![1, 2, 3];
+
+    let handle = thread::spawn(move || {
+        println!("Here's a vector: {:?}", v);
+    });
+
+    handle.join().unwrap();
+
 }
 
