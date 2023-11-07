@@ -1,12 +1,14 @@
 use std::sync::mpsc;
+use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 
 fn main() {
     // run these individually for cleaner results
-    demo_threads();
-    demo_move();
-    demo_mpsc();
+    //demo_threads();
+    //demo_move();
+    //demo_mpsc();
+    demo_mutex();
 }
 
 fn demo_threads() {
@@ -89,5 +91,16 @@ fn demo_mpsc() {
         println!("Got: {}", msg);
     };
 
+}
+
+fn demo_mutex() {
+    let m = Mutex::new(5);
+
+    {
+        let mut num = m.lock().unwrap();
+        *num = 6
+    }
+
+    println!("m = {:?}", m);
 }
 
