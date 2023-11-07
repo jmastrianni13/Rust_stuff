@@ -3,8 +3,9 @@ use std::thread;
 use std::time::Duration;
 
 fn main() {
-    // demo_threads();
-    // demo_move();
+    // run these individually for cleaner results
+    demo_threads();
+    demo_move();
     demo_mpsc();
 }
 
@@ -54,6 +55,7 @@ fn demo_move() {
 fn demo_mpsc() {
     // mpsc stands for multi producer, single consumer
     let (tx, rx) = mpsc::channel();
+    let tx1 = tx.clone();
 
     thread::spawn(move || {
         let vals = vec![
@@ -61,6 +63,20 @@ fn demo_mpsc() {
             String::from("from"),
             String::from("the"),
             String::from("thread"),
+        ];
+
+        for val in vals {
+            tx1.send(val).unwrap();
+            thread::sleep(Duration::from_secs(1));
+        }
+    });
+
+    thread::spawn(move || {
+        let vals = vec![
+            String::from("more"),
+            String::from("messages"),
+            String::from("for"),
+            String::from("you"),
         ];
 
         for val in vals {
