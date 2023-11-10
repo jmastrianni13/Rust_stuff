@@ -16,7 +16,7 @@ impl Post {
     }
     
     pub fn content(&self) -> &str {
-        return "";
+        return self.state.as_ref().unwrap().content(self);
     }
 
     pub fn request_review(&mut self) {
@@ -36,6 +36,9 @@ impl Post {
 trait State {
     fn request_review(self: Box<Self>) -> Box<dyn State>;
     fn approve(self: Box<Self>) -> Box<dyn State>;
+    fn content<'a>(&self, _post: &'a Post) -> &'a str {
+        return ""; // default impl means do not have to implement for all struct using this trait
+    }
 }
 
 struct Draft {}
@@ -68,6 +71,9 @@ impl State for Published {
     }
     fn approve(self: Box<Self>) -> Box<dyn State> {
         return self; // do not approve for published post, do not change state
+    }
+    fn content<'a>(&self, post: &'a Post) -> &'a str { // overrides the default impl
+        return &post.content;
     }
 }
 
