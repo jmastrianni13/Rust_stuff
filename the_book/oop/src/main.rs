@@ -1,7 +1,11 @@
+mod blog;
+
 use oop;
+
 fn main() {
     demo_averagedcollection();
     demo_draw();
+    demo_blog();
 }
 
 fn demo_averagedcollection () {
@@ -53,3 +57,15 @@ fn demo_draw () {
     screen.run();
 }
 
+fn demo_blog () {
+    let mut post = blog::Post::new();
+
+    post.add_text("I ate a salad for lunch today");
+    assert_eq!("", post.content());
+
+    post.request_review();
+    assert_eq!("", post.content());
+
+    post.approve();
+    assert_eq!("I ate a salad for lunch today", post.content());
+}
