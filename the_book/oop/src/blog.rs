@@ -25,14 +25,17 @@ impl Post {
         }
     }
 
-    pub fn approve(&self) {
-        todo!();
+    pub fn approve(&mut self) {
+        if let Some(s) = self.state.take() {
+            self.state = Some(s.approve())
+        }
     }
 
 }
 
 trait State {
     fn request_review(self: Box<Self>) -> Box<dyn State>;
+    fn approve(self: Box<Self>) -> Box<dyn State>;
 }
 
 struct Draft {}
@@ -41,6 +44,9 @@ impl State for Draft {
     fn request_review(self: Box<Self>) -> Box<dyn State> {
         return Box::new(PendingReview {});
     }
+    fn approve(self: Box<Self>) -> Box<dyn State> {
+        return self; // do not approve in draft state, do not change state
+    }
 }
 
 struct PendingReview {}
@@ -48,6 +54,20 @@ struct PendingReview {}
 impl State for PendingReview {
     fn request_review(self: Box<Self>) -> Box<dyn State> {
         return self; // when requesting review in pending state, do not change state
+    }
+    fn approve(self: Box<Self>) -> Box<dyn State> {
+        return Box::new(Published {});
+    }
+}
+
+struct Published {}
+
+impl State for Published {
+    fn request_review(self: Box<Self>) -> Box<dyn State> {
+        return self; // do not request review for published post, do not change state
+    }
+    fn approve(self: Box<Self>) -> Box<dyn State> {
+        return self; // do not approve for published post, do not change state
     }
 }
 
