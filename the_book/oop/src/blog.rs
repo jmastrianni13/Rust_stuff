@@ -19,8 +19,10 @@ impl Post {
         return "";
     }
 
-    pub fn request_review(&self) {
-        todo!();
+    pub fn request_review(&mut self) {
+        if let Some(s) = self.state.take() {
+            self.state = Some(s.request_review())
+        }
     }
 
     pub fn approve(&self) {
@@ -29,9 +31,23 @@ impl Post {
 
 }
 
-trait State {}
+trait State {
+    fn request_review(self: Box<Self>) -> Box<dyn State>;
+}
 
 struct Draft {}
 
-impl State for Draft {}
+impl State for Draft {
+    fn request_review(self: Box<Self>) -> Box<dyn State> {
+        return Box::new(PendingReview {});
+    }
+}
+
+struct PendingReview {}
+
+impl State for PendingReview {
+    fn request_review(self: Box<Self>) -> Box<dyn State> {
+        return self; // when requesting review in pending state, do not change state
+    }
+}
 
