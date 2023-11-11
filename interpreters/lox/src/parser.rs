@@ -14,7 +14,11 @@ impl Parser {
         }
     }
 
-    pub fn expression(&mut self) -> Result<expr::Expr, String> {
+    pub fn parse(&mut self) -> Result<expr::Expr, String> {
+        return self.expression();
+    }
+
+    fn expression(&mut self) -> Result<expr::Expr, String> {
         return self.equality();
     }
 
@@ -255,7 +259,7 @@ mod tests {
         let tokens = vec![one, plus, two, semicolon];
 
         let mut parser = Parser::new(tokens);
-        let parsed_exp = parser.expression().unwrap();
+        let parsed_exp = parser.parse().unwrap();
         let string_exp = parsed_exp.to_string();
 
         assert_eq!(string_exp, "(+ 1 2)");
@@ -268,7 +272,7 @@ mod tests {
         let mut scanner = Scanner::new(source);
         let tokens = scanner.scan_tokens().unwrap();
         let mut parser = Parser::new(tokens);
-        let parsed_exp = parser.expression().unwrap();
+        let parsed_exp = parser.parse().unwrap();
         let string_exp = parsed_exp.to_string();
 
         assert_eq!(string_exp, "(== (+ 1 2) (+ 5 7))");

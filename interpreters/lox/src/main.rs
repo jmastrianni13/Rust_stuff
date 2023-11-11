@@ -74,7 +74,7 @@ fn run(contents: &str) -> Result<(), String> {
     let tokens = scanner.scan_tokens()?;
 
     let mut parser = parser::Parser::new(tokens);
-    let exp = parser.expression()?;
+    let exp = parser.parse()?;
     println!("{}", exp.to_string());
 
     return Ok(());
