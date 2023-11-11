@@ -73,9 +73,9 @@ fn run(contents: &str) -> Result<(), String> {
     let mut scanner = Scanner::new(contents);
     let tokens = scanner.scan_tokens()?;
 
-    for token in tokens {
-        println!("{:?}", token);
-    }
+    let mut parser = parser::Parser::new(tokens);
+    let exp = parser.expression()?;
+    println!("{}", exp.to_string());
 
     return Ok(());
 }
