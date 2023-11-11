@@ -289,5 +289,25 @@ mod tests {
         assert_eq!(string_exp, "(== 1 (group (+ 2 2)))");
     }
 
+    #[test]
+    fn test_order_of_op() {
+        let source = "2 * 3 + 4";
+        let mut scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens().unwrap();
+        let mut parser = Parser::new(tokens);
+        let parsed_exp = parser.parse().unwrap();
+        let string_exp = parsed_exp.to_string();
+
+        assert_eq!(string_exp, "(+ (* 2 3) 4)");
+
+        let source = "2 + 3 * 4";
+        let mut scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens().unwrap();
+        let mut parser = Parser::new(tokens);
+        let parsed_exp = parser.parse().unwrap();
+        let string_exp = parsed_exp.to_string();
+
+        assert_eq!(string_exp, "(+ 2 (* 3 4))");
+    }
 }
 
