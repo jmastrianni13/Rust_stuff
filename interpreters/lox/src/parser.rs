@@ -109,19 +109,33 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<expr::Expr, String> {
-        if self.match_token(scanner::TokenType::LeftParen) {
-            let exp = self.expression()?;
-            self.consume(scanner::TokenType::RightParen, "expected ')'")?;
-            return Ok(expr::Expr::Grouping {
-                expression: Box::from(exp)
-            });
-        } else {
-            let token = self.peek();
-            self.advance();
-            return Ok(expr::Expr::Literal {
-                value: expr::LiteralValue::from_token(token)
-            });
+        let token = self.peek();
+
+        let result;
+        match token.token_type {
+            scanner::TokenType::LeftParen => {
+                let exp = self.expression()?;
+                self.consume(scanner::TokenType::RightParen, "expected ')'")?;
+                result = expr::Expr::Grouping {
+                    expression: Box::from(exp)
+                };
+            },
+            scanner::TokenType::False |
+            scanner::TokenType::True |
+            scanner::TokenType::Nil |
+            scanner::TokenType::NumberLit |
+            scanner::TokenType::StringLit => {
+                result = expr::Expr::Literal {
+                    value: expr::LiteralValue::from_token(token)
+                };
+            },
+            _ => return Err("expected expression".to_string()),
         }
+
+        // if are here, token was matched and gets consumed
+        self.advance();
+
+        return Ok(result);
     }
 
     fn consume(&mut self, token_type: scanner::TokenType, msg: &str) -> Result<(), String> {
@@ -176,6 +190,30 @@ impl Parser {
 
     fn is_at_end(&mut self) -> bool {
         return self.peek().token_type == scanner::TokenType::Eof;
+    }
+
+    fn synchronize(&mut self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            if self.previous().token_type == scanner::TokenType::Semicolon {
+                return;
+            }
+
+            match self.peek().token_type {
+                scanner::TokenType::Class |
+                scanner::TokenType::Fun |
+                scanner::TokenType::Var |
+                scanner::TokenType::For |
+                scanner::TokenType::If |
+                scanner::TokenType::While |
+                scanner::TokenType::Print |
+                scanner::TokenType::Return  => return,
+                _ => (),
+            }
+
+            self.advance();
+        }
     }
 }
 
