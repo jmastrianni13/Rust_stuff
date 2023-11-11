@@ -118,6 +118,7 @@ impl Parser {
         let result;
         match token.token_type {
             scanner::TokenType::LeftParen => {
+                self.advance();
                 let exp = self.expression()?;
                 self.consume(scanner::TokenType::RightParen, "expected ')'")?;
                 result = expr::Expr::Grouping {
@@ -129,15 +130,13 @@ impl Parser {
             scanner::TokenType::Nil |
             scanner::TokenType::NumberLit |
             scanner::TokenType::StringLit => {
+                self.advance();
                 result = expr::Expr::Literal {
                     value: expr::LiteralValue::from_token(token)
                 };
             },
             _ => return Err("expected expression".to_string()),
         }
-
-        // if are here, token was matched and gets consumed
-        self.advance();
 
         return Ok(result);
     }
@@ -276,6 +275,18 @@ mod tests {
         let string_exp = parsed_exp.to_string();
 
         assert_eq!(string_exp, "(== (+ 1 2) (+ 5 7))");
+    }
+
+    #[test]
+    fn test_eq_with_paren() {
+        let source = "1 == (2 + 2)";
+        let mut scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens().unwrap();
+        let mut parser = Parser::new(tokens);
+        let parsed_exp = parser.parse().unwrap();
+        let string_exp = parsed_exp.to_string();
+
+        assert_eq!(string_exp, "(== 1 (group (+ 2 2)))");
     }
 
 }
