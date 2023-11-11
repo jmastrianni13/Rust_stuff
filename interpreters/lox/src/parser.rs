@@ -14,8 +14,8 @@ impl Parser {
         }
     }
 
-    fn expression(&mut self) -> expr::Expr {
-        self.equality()
+    pub fn expression(&mut self) -> expr::Expr {
+        return self.equality();
     }
 
     fn equality(&mut self) -> expr::Expr {
@@ -176,5 +176,64 @@ impl Parser {
     fn is_at_end(&mut self) -> bool {
         return self.peek().token_type == scanner::TokenType::Eof;
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::scanner::{LiteralValue, Scanner};
+
+    #[test]
+    fn test_addition() {
+        let one = scanner::Token{
+            token_type: scanner::TokenType::NumberLit,
+            lexeme: "1".to_string(),
+            literal: Some(LiteralValue::IntValue(1)),
+            line_number: 0
+        };
+
+        let plus = scanner::Token{
+            token_type: scanner::TokenType::Plus,
+            lexeme: "+".to_string(),
+            literal: None,
+            line_number: 0
+        };
+
+        let two = scanner::Token{
+            token_type: scanner::TokenType::NumberLit,
+            lexeme: "2".to_string(),
+            literal: Some(LiteralValue::IntValue(2)),
+            line_number: 0
+        };
+
+        let semicolon = scanner::Token{
+            token_type: scanner::TokenType::Semicolon,
+            lexeme: ";".to_string(),
+            literal: None,
+            line_number: 0
+        };
+
+        let tokens = vec![one, plus, two, semicolon];
+
+        let mut parser = Parser::new(tokens);
+        let parsed_exp = parser.expression();
+        let string_exp = parsed_exp.to_string();
+
+        assert_eq!(string_exp, "(+ 1 2)");
+
+    }
+
+    #[test]
+    fn test_comparison () {
+        let source = "1 + 2 == 5 + 7";
+        let mut scanner = Scanner::new(source);
+        let tokens = scanner.scan_tokens().unwrap();
+        let mut parser = Parser::new(tokens);
+        let parsed_exp = parser.expression();
+        let string_exp = parsed_exp.to_string();
+
+        assert_eq!(string_exp, "(== (+ 1 2) (+ 5 7))");
+    }
+
 }
 
