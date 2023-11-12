@@ -16,6 +16,48 @@ fn unwrap_as_string(literal: Option<scanner::LiteralValue>) -> String {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum LiteralValue {
+    Number(f32),
+    StringLit(String),
+    True,
+    False,
+    Nil,
+}
+
+impl LiteralValue {
+    pub fn to_string(&self) -> String {
+        match self {
+            LiteralValue::Number(x) => x.to_string(),
+            LiteralValue::StringLit(x) => x.clone(),
+            LiteralValue::True => "true".to_string(),
+            LiteralValue::False => "false".to_string(),
+            LiteralValue::Nil => "nil".to_string(),
+        }
+    }
+
+    pub fn from_token(token: scanner::Token) -> Self {
+        match token.token_type {
+            scanner::TokenType::NumberLit => Self::Number(unwrap_as_f32(token.literal)),
+            scanner::TokenType::StringLit => Self::StringLit(unwrap_as_string(token.literal)),
+            scanner::TokenType::False => Self::False,
+            scanner::TokenType::True => Self::True,
+            scanner::TokenType::Nil => Self::Nil,
+            _ => panic!("cannot create LiteralValue from uknown token_type {:?}", token)
+        }
+    }
+
+    pub fn is_falsy(&self) -> LiteralValue {
+        match self {
+            LiteralValue::Number(x) => if *x == 0.0 as f32 { LiteralValue::True } else { LiteralValue::False },
+            LiteralValue::StringLit(s) => if s.len() == 0 { LiteralValue::True } else { LiteralValue::False },
+            LiteralValue::True => LiteralValue::False,
+            LiteralValue::False => LiteralValue::True,
+            LiteralValue::Nil => LiteralValue::True,
+        }
+    }
+}
+
 pub enum Expr {
     Binary { left: Box<Expr>, operator: scanner::Token, right: Box<Expr>},
     Grouping { expression: Box<Expr> },
@@ -71,47 +113,6 @@ impl Expr {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum LiteralValue {
-    Number(f32),
-    StringLit(String),
-    True,
-    False,
-    Nil,
-}
-
-impl LiteralValue {
-    pub fn to_string(&self) -> String {
-        match self {
-            LiteralValue::Number(x) => x.to_string(),
-            LiteralValue::StringLit(x) => x.clone(),
-            LiteralValue::True => "true".to_string(),
-            LiteralValue::False => "false".to_string(),
-            LiteralValue::Nil => "nil".to_string(),
-        }
-    }
-
-    pub fn from_token(token: scanner::Token) -> Self {
-        match token.token_type {
-            scanner::TokenType::NumberLit => Self::Number(unwrap_as_f32(token.literal)),
-            scanner::TokenType::StringLit => Self::StringLit(unwrap_as_string(token.literal)),
-            scanner::TokenType::False => Self::False,
-            scanner::TokenType::True => Self::True,
-            scanner::TokenType::Nil => Self::Nil,
-            _ => panic!("cannot create LiteralValue from uknown token_type {:?}", token)
-        }
-    }
-
-    pub fn is_falsy(&self) -> LiteralValue {
-        match self {
-            LiteralValue::Number(x) => if *x == 0.0 as f32 { LiteralValue::True } else { LiteralValue::False },
-            LiteralValue::StringLit(s) => if s.len() == 0 { LiteralValue::True } else { LiteralValue::False },
-            LiteralValue::True => LiteralValue::False,
-            LiteralValue::False => LiteralValue::True,
-            LiteralValue::Nil => LiteralValue::True,
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
