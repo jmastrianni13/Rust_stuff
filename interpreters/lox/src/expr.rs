@@ -16,7 +16,7 @@ fn unwrap_as_string(literal: Option<scanner::LiteralValue>) -> String {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LiteralValue {
     Number(f32),
     StringLit(String),
@@ -109,7 +109,7 @@ impl Expr {
                     (LiteralValue::Number(x), scanner::TokenType::Minus) => Ok(LiteralValue::Number(-x)),
                     (_, scanner::TokenType::Minus) => Err(format!("minus operation not supported for {}", right.to_string())),
                     (any, scanner::TokenType::Bang) => Ok(any.is_falsy()),
-                    _ => todo!(),
+                    (_, toktype) => Err(format!("{} is not a valid unary operator", toktype)),
                 }
             },
             Expr::Binary { left, operator, right } => {
@@ -158,16 +158,6 @@ impl Expr {
                         scanner::TokenType::LessEqual,
                         LiteralValue::Number(y)
                     ) => Ok(LiteralValue::from_bool(x <= y)),
-                    (
-                        LiteralValue::Number(x),
-                        scanner::TokenType::BangEqual,
-                        LiteralValue::Number(y)
-                    ) => Ok(LiteralValue::from_bool(x != y)),
-                    (
-                        LiteralValue::Number(x),
-                        scanner::TokenType::EqualEqual,
-                        LiteralValue::Number(y)
-                    ) => Ok(LiteralValue::from_bool(x == y)),
 
                     (
                         LiteralValue::StringLit(_),
@@ -195,18 +185,23 @@ impl Expr {
                         scanner::TokenType::LessEqual,
                         LiteralValue::StringLit(s2)
                     ) => Ok(LiteralValue::from_bool(s1 <= s2)),
-                    (
-                        LiteralValue::StringLit(s1),
-                        scanner::TokenType::BangEqual,
-                        LiteralValue::StringLit(s2)
-                    ) => Ok(LiteralValue::from_bool(s1 != s2)),
-                    (
-                        LiteralValue::StringLit(s1),
-                        scanner::TokenType::EqualEqual,
-                        LiteralValue::StringLit(s2)
-                    ) => Ok(LiteralValue::from_bool(s1 == s2)),
 
-                    _ => Err("could not evaluate pattern".to_string()),
+                    (
+                        x,
+                        scanner::TokenType::BangEqual,
+                        y
+                    ) => Ok(LiteralValue::from_bool(x != y)),
+                    (
+                        x,
+                        scanner::TokenType::EqualEqual,
+                        y
+                    ) => Ok(LiteralValue::from_bool(x == y)),
+
+                    (
+                        x,
+                        toktype,
+                        y
+                    ) => Err(format!("binary operator {} not implemented for operands {:?} and {:?}", toktype, x, y)),
 
                 }
 
