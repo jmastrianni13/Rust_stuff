@@ -48,11 +48,30 @@ impl Expr {
         }
     }
 
+    pub fn evaluate(&self) -> Result<LiteralValue, String> {
+        match self {
+            Expr::Literal { value } => Ok((*value).clone()),
+            Expr::Grouping { expression } => expression.evaluate(),
+            Expr::Unary { operator, right } => {
+                let right = right.evaluate()?;
+
+                match (&right, operator.token_type) {
+                    (LiteralValue::Number(x), scanner::TokenType::Minus) => Ok(LiteralValue::Number(-x)),
+                    (_, scanner::TokenType::Minus) => Err(format!("minus operation not supported for {}", right.to_string())),
+                    (any, scanner::TokenType::Bang) => Ok(any.is_falsy()),
+                    _ => todo!(),
+                }
+            }
+            _ => todo!(),
+        }
+    }
+
     pub fn print(&self) {
         println!("{}", self.to_string());
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum LiteralValue {
     Number(f32),
     StringLit(String),
@@ -83,6 +102,15 @@ impl LiteralValue {
         }
     }
 
+    pub fn is_falsy(&self) -> LiteralValue {
+        match self {
+            LiteralValue::Number(x) => if *x == 0.0 as f32 { LiteralValue::True } else { LiteralValue::False },
+            LiteralValue::StringLit(s) => if s.len() == 0 { LiteralValue::True } else { LiteralValue::False },
+            LiteralValue::True => LiteralValue::False,
+            LiteralValue::False => LiteralValue::True,
+            LiteralValue::Nil => LiteralValue::True,
+        }
+    }
 }
 
 #[cfg(test)]
