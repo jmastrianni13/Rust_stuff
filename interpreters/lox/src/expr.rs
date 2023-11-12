@@ -103,7 +103,53 @@ impl Expr {
                     (any, scanner::TokenType::Bang) => Ok(any.is_falsy()),
                     _ => todo!(),
                 }
-            }
+            },
+            Expr::Binary { left, operator, right } => {
+                let left = left.evaluate()?;
+                let right = right.evaluate()?;
+
+                match (&left, operator.token_type, &right) {
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::Star,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::Number(x * y)),
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::Slash,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::Number(x / y)),
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::Plus,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::Number(x + y)),
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::Minus,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::Number(x - y)),
+
+                    (
+                        LiteralValue::StringLit(_),
+                        _,
+                        LiteralValue::Number(_)
+                    ) => Err("binary operation not supported for inconsistent types".to_string()),
+                    (
+                        LiteralValue::Number(_),
+                        _,
+                        LiteralValue::StringLit(_)
+                    ) => Err("binary operation not supported for inconsistent types".to_string()),
+
+                    (
+                        LiteralValue::StringLit(s1),
+                        scanner::TokenType::Plus,
+                        LiteralValue::StringLit(s2)
+                    ) => Ok(LiteralValue::StringLit(format!("{}{}", s1, s2))),
+
+                }
+
+            },
             _ => todo!(),
         }
     }
