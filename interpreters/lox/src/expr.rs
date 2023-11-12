@@ -171,14 +171,14 @@ impl Expr {
 
                     (
                         LiteralValue::StringLit(_),
-                        _,
+                        op,
                         LiteralValue::Number(_)
-                    ) => Err("binary operation not supported for inconsistent types".to_string()),
+                    ) => Err(format!("binary operation {} not supported for inconsistent types", op)),
                     (
                         LiteralValue::Number(_),
-                        _,
+                        op,
                         LiteralValue::StringLit(_)
-                    ) => Err("binary operation not supported for inconsistent types".to_string()),
+                    ) => Err(format!("binary operation {} not supported for inconsistent types", op)),
 
                     (
                         LiteralValue::StringLit(s1),
