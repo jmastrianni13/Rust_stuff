@@ -185,6 +185,27 @@ impl Expr {
                         scanner::TokenType::Plus,
                         LiteralValue::StringLit(s2)
                     ) => Ok(LiteralValue::StringLit(format!("{}{}", s1, s2))),
+                    (
+                        LiteralValue::StringLit(s1),
+                        scanner::TokenType::Less,
+                        LiteralValue::StringLit(s2)
+                    ) => Ok(LiteralValue::from_bool(s1 < s2)),
+                    (
+                        LiteralValue::StringLit(s1),
+                        scanner::TokenType::LessEqual,
+                        LiteralValue::StringLit(s2)
+                    ) => Ok(LiteralValue::from_bool(s1 <= s2)),
+                    (
+                        LiteralValue::StringLit(s1),
+                        scanner::TokenType::BangEqual,
+                        LiteralValue::StringLit(s2)
+                    ) => Ok(LiteralValue::from_bool(s1 != s2)),
+                    (
+                        LiteralValue::StringLit(s1),
+                        scanner::TokenType::EqualEqual,
+                        LiteralValue::StringLit(s2)
+                    ) => Ok(LiteralValue::from_bool(s1 == s2)),
+
                     _ => Err("could not evaluate pattern".to_string()),
 
                 }
