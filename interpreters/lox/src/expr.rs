@@ -212,11 +212,8 @@ impl Expr {
                         toktype,
                         y
                     ) => Err(format!("binary operator {} not implemented for operands {:?} and {:?}", toktype, x, y)),
-
                 }
-
-            },
-            _ => todo!(),
+            }
         }
     }
 
