@@ -75,7 +75,8 @@ fn run(contents: &str) -> Result<(), String> {
 
     let mut parser = parser::Parser::new(tokens);
     let exp = parser.parse()?;
-    println!("{}", exp.to_string());
+    let result = exp.evaluate()?;
+    println!("{}", result.to_string());
 
     return Ok(());
 }
