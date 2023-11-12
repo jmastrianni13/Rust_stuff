@@ -36,6 +36,16 @@ impl LiteralValue {
         }
     }
 
+    pub fn to_type(&self) -> &str {
+        match self {
+            LiteralValue::Number(_) => "Number",
+            LiteralValue::StringLit(_) => "String",
+            LiteralValue::True => "Boolean",
+            LiteralValue::False => "Boolean",
+            LiteralValue::Nil => "Nil",
+        }
+    }
+
     pub fn from_token(token: scanner::Token) -> Self {
         match token.token_type {
             scanner::TokenType::NumberLit => Self::Number(unwrap_as_f32(token.literal)),
@@ -107,7 +117,7 @@ impl Expr {
 
                 match (&right, operator.token_type) {
                     (LiteralValue::Number(x), scanner::TokenType::Minus) => Ok(LiteralValue::Number(-x)),
-                    (_, scanner::TokenType::Minus) => Err(format!("minus operation not supported for {}", right.to_string())),
+                    (_, scanner::TokenType::Minus) => Err(format!("minus operation not supported for {}", right.to_type())),
                     (any, scanner::TokenType::Bang) => Ok(any.is_falsy()),
                     (_, toktype) => Err(format!("{} is not a valid unary operator", toktype)),
                 }
