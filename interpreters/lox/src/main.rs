@@ -1,6 +1,7 @@
 mod scanner;
 mod expr;
 mod parser;
+mod interpreter;
 use crate::scanner::*;
 
 use std::env;
@@ -34,13 +35,15 @@ fn main() {
 }
 
 fn run_file(path: &str) -> Result<(), String> {
+    let mut interp = interpreter::Interpreter::new();
     match fs::read_to_string(path) {
         Err(msg) => return Err(msg.to_string()),
-        Ok(contents) => return run(&contents),
+        Ok(contents) => return run(&mut interp, &contents),
     }
 }
 
 fn run_prompt() -> Result<(), String> {
+    let mut interp = interpreter::Interpreter::new();
     loop {
         print!("> ");
         match io::stdout().flush() {
@@ -62,20 +65,19 @@ fn run_prompt() -> Result<(), String> {
             Err(_) => return Err("count not read line".to_string()),
         }
         println!("got: {}", buffer);
-        match run(&buffer) {
+        match run(&mut interp, &buffer) {
             Ok(_) => (),
             Err(msg) => println!("{}", msg),
         }
     }
 }
 
-fn run(contents: &str) -> Result<(), String> {
+fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), String> {
     let mut scanner = Scanner::new(contents);
     let tokens = scanner.scan_tokens()?;
-
     let mut parser = parser::Parser::new(tokens);
     let exp = parser.parse()?;
-    let result = exp.evaluate()?;
+    let result = interp.interpret(exp)?;
     println!("{}", result.to_string());
 
     return Ok(());
