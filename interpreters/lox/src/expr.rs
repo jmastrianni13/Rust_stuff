@@ -47,6 +47,14 @@ impl LiteralValue {
         }
     }
 
+    pub fn from_bool(b: bool) -> Self {
+        if b {
+            return LiteralValue::True;
+        } else {
+            return LiteralValue::False;
+        }
+    }
+
     pub fn is_falsy(&self) -> LiteralValue {
         match self {
             LiteralValue::Number(x) => if *x == 0.0 as f32 { LiteralValue::True } else { LiteralValue::False },
@@ -131,6 +139,37 @@ impl Expr {
                     ) => Ok(LiteralValue::Number(x - y)),
 
                     (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::Greater,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::from_bool(x > y)),
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::GreaterEqual,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::from_bool(x >= y)),
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::Less,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::from_bool(x < y)),
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::LessEqual,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::from_bool(x <= y)),
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::BangEqual,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::from_bool(x != y)),
+                    (
+                        LiteralValue::Number(x),
+                        scanner::TokenType::EqualEqual,
+                        LiteralValue::Number(y)
+                    ) => Ok(LiteralValue::from_bool(x == y)),
+
+                    (
                         LiteralValue::StringLit(_),
                         _,
                         LiteralValue::Number(_)
@@ -146,6 +185,7 @@ impl Expr {
                         scanner::TokenType::Plus,
                         LiteralValue::StringLit(s2)
                     ) => Ok(LiteralValue::StringLit(format!("{}{}", s1, s2))),
+                    _ => Err("could not evaluate pattern".to_string()),
 
                 }
 
