@@ -1,5 +1,6 @@
 fn main() {
     demo_if_let_exp();
+    demo_while_let();
 }
 
 fn demo_if_let_exp () {
@@ -22,6 +23,16 @@ fn demo_if_let_exp () {
     }
 }
 
+fn demo_while_let () {
+    let mut stack = Vec::new();
 
+    stack.push(1);
+    stack.push(2);
+    stack.push(3);
+
+    while let Some(top) = stack.pop() {
+        println!("{top}");
+    }
+}
 
 
