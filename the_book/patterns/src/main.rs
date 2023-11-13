@@ -1,6 +1,7 @@
 fn main() {
     demo_if_let_exp();
     demo_while_let();
+    demo_for_loop();
 }
 
 fn demo_if_let_exp () {
@@ -35,4 +36,11 @@ fn demo_while_let () {
     }
 }
 
+fn demo_for_loop () {
+    let v = vec!['a', 'b', 'c'];
+
+    for (index, value) in v.iter().enumerate() {
+        println!("{} is at index {}", value, index);
+    }
+}
 
