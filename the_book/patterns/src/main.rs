@@ -51,6 +51,25 @@ struct Point {
     y: i32,
 }
 
+enum Message {
+    Quit,
+    Move { x: i32, y: i32 },
+    Write(String),
+    ChangeColor(i32, i32, i32),
+}
+
+enum Color {
+    Rgb(i32, i32, i32),
+    Hsv(i32, i32, i32),
+}
+
+enum NestedMessage {
+    Quit,
+    Move {x: i32, y: i32},
+    Write(String),
+    ChangeColor(Color),
+}
+
 fn demo_matching() {
     // literals
     let x = 1;
@@ -116,6 +135,35 @@ fn demo_destructuring() {
         Point{x, y} => {
             println!("On neither axis: ({x}, {y})");
         }
+    }
+
+    let msg = Message::ChangeColor(0, 160, 255);
+
+    match msg {
+        Message::Quit => {
+            println!("The Quit variant has not data to destructure.");
+        }
+        Message::Move{x, y} => {
+            println!("Move in the x direction {x} and in the y direction {y}");
+        }
+        Message::Write(text) => {
+            println!("Text message: {text}");
+        }
+        Message::ChangeColor(r, g, b) => {
+            println!("Change the color to red {r}, green {g}, and blue {b}");
+        }
+    }
+
+    let msg = NestedMessage::ChangeColor(Color::Hsv(0, 160, 255));
+
+    match msg {
+        NestedMessage::ChangeColor(Color::Rgb(r, g, b)) => {
+            println!("Change color to red {r}, green {g}, and blue {b}");
+        }
+        NestedMessage::ChangeColor(Color::Hsv(h, s, v)) => {
+            println!("Change color to hue {h}, saturation {s}, and value {v}");
+        }
+        _ => (),
     }
 }
 
