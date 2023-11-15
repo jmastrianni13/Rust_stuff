@@ -2,6 +2,7 @@ mod scanner;
 mod expr;
 mod parser;
 mod interpreter;
+mod stmt;
 use crate::scanner::*;
 
 use std::env;
