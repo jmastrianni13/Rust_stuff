@@ -1,5 +1,6 @@
 use crate::expr;
 use crate::scanner;
+use crate::stmt;
 
 pub struct Parser {
     tokens: Vec<scanner::Token>,
@@ -14,8 +15,43 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<expr::Expr, String> {
-        return self.expression();
+    pub fn parse(&mut self) -> Result<Vec<stmt::Stmt>, String> {
+        let mut stmts = vec![];
+        let mut errs = vec![];
+
+        while !self.is_at_end() {
+            let stmt = self.statement();
+            match stmt {
+                Ok(s) => stmts.push(s),
+                Err(msg) => errs.push(msg),
+            }
+        }
+
+        if errs.len() == 0 {
+            return Ok(stmts)
+        } else {
+            return Err(errs.join("\n"));
+        }
+    }
+
+    fn statement(&mut self) -> Result<stmt::Stmt, String> {
+        if self.match_token(scanner::TokenType::Print) {
+            self.print_statement()
+        } else {
+            self.expression_statement()
+        }
+    }
+
+    fn print_statement(&mut self) -> Result<stmt::Stmt, String> {
+        let value = self.expression()?;
+        self.consume(scanner::TokenType::Semicolon, "Expected a ';' after value.");
+        return Ok(stmt::Stmt::Print {
+            expression: value
+        });
+    }
+
+    fn expression_statement(&mut self) -> Result<stmt::Stmt, String> {
+        todo!();
     }
 
     fn expression(&mut self) -> Result<expr::Expr, String> {
