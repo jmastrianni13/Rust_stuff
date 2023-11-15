@@ -64,6 +64,10 @@ enum Message {
     ChangeColor(i32, i32, i32),
 }
 
+enum Greeting {
+    Hello { id: i32 },
+}
+
 enum Color {
     Rgb(i32, i32, i32),
     Hsv(i32, i32, i32),
@@ -194,6 +198,20 @@ fn demo_matching() {
     match x {
         4 | 5 | 6 if y => println!("yes"),
         _ => println!("no"),
+    }
+
+    // @ bindings
+
+    let msg = Greeting::Hello { id : 5 };
+
+    match msg {
+        Greeting::Hello {
+            id: id_variable @ 3..=7,
+        } => println!("Found an id in range: {}", id_variable),
+        Greeting::Hello {
+            id: 10..=12 // does not save value of id
+        } => println!("Found an id in another range"),
+        Greeting::Hello { id } => println!("Found some other id: {}", id),
     }
 
 }
