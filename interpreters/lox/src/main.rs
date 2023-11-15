@@ -76,11 +76,11 @@ fn run_prompt() -> Result<(), String> {
 fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), String> {
     let mut scanner = Scanner::new(contents);
     let tokens = scanner.scan_tokens()?;
-    let mut parser = parser::Parser::new(tokens);
-    let exp = parser.parse()?;
-    let result = interp.interpret(exp)?;
-    println!("{}", result.to_string());
 
+    let mut parser = parser::Parser::new(tokens);
+    let statements = parser.parse()?;
+
+    interp.interpret(statements)?;
     return Ok(());
 }
 
