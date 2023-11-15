@@ -51,7 +51,12 @@ impl Parser {
     }
 
     fn expression_statement(&mut self) -> Result<stmt::Stmt, String> {
-        todo!();
+        let exp = self.expression()?;
+        self.consume(scanner::TokenType::Semicolon, "Expected a ';' after expression.");
+        return Ok(stmt::Stmt::Expression {
+            expression: exp
+        });
+
     }
 
     fn expression(&mut self) -> Result<expr::Expr, String> {
