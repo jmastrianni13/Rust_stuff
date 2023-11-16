@@ -81,7 +81,7 @@ pub enum Expr {
     Grouping { expression: Box<Expr> },
     Literal { value: LiteralValue },
     Unary { operator: scanner::Token, right: Box<Expr> },
-    Var {name: scanner::Token},
+    Variable {name: scanner::Token},
 }
 
 
@@ -105,13 +105,13 @@ impl Expr {
                 let right_str = (*right).to_string();
                 return format!("({} {})", operator_str, right_str);
             }
-            Expr::Var { name } => format!("(var {})", name.lexeme),
+            Expr::Variable { name } => format!("(var {})", name.lexeme),
         }
     }
 
     pub fn evaluate(&self) -> Result<LiteralValue, String> {
         match self {
-            Expr::Var { name: name } => todo!(),
+            Expr::Variable { name: name } => todo!(),
             Expr::Literal { value } => Ok((*value).clone()),
             Expr::Grouping { expression } => expression.evaluate(),
             Expr::Unary { operator, right } => {
