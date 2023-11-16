@@ -93,7 +93,25 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<expr::Expr, String> {
-        return self.equality();
+        return self.assignment();
+    }
+
+    fn assignment(&mut self) -> Result<expr::Expr, String> {
+        let exp = self.equality()?;
+
+        if self.match_token(scanner::TokenType::Equal) {
+            let equals = self.previous();
+            let value = self.assignment()?;
+
+            match exp {
+                expr::Expr::Variable { name } => {
+                    return Ok(expr::Expr::Assignment { name: name, value: Box::from(value) });
+                },
+                _ => Err("invalid assignment target.".to_string()),
+            }
+        } else {
+            return Ok(exp);
+        }
     }
 
     fn equality(&mut self) -> Result<expr::Expr, String> {
