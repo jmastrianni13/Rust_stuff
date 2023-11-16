@@ -77,6 +77,7 @@ impl LiteralValue {
     }
 }
 
+#[derive(Debug)]
 pub enum Expr {
     Binary { left: Box<Expr>, operator: scanner::Token, right: Box<Expr>},
     Grouping { expression: Box<Expr> },

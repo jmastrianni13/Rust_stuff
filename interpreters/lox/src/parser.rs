@@ -23,7 +23,10 @@ impl Parser {
             let stmt = self.declaration();
             match stmt {
                 Ok(s) => stmts.push(s),
-                Err(msg) => errs.push(msg),
+                Err(msg) => {
+                    errs.push(msg);
+                    self.synchronize();
+                }
             }
         }
 
@@ -41,7 +44,6 @@ impl Parser {
                     return Ok(statement);
                 },
                 Err(msg) =>  {
-                    self.synchronize();
                     return Err(msg);
                 }
             }
@@ -207,7 +209,7 @@ impl Parser {
                     value: expr::LiteralValue::from_token(token)
                 };
             },
-            scanner::TokenType::Var => {
+            scanner::TokenType::Identifier => {
                 self.advance();
                 result = expr::Expr::Variable { name: self.previous() };
             }
