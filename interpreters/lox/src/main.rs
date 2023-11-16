@@ -3,7 +3,9 @@ mod expr;
 mod parser;
 mod interpreter;
 mod stmt;
-use crate::scanner::*;
+mod environment;
+
+//use crate::scanner::*;
 
 use std::env;
 use std::fs;
@@ -74,7 +76,7 @@ fn run_prompt() -> Result<(), String> {
 }
 
 fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), String> {
-    let mut scanner = Scanner::new(contents);
+    let mut scanner = scanner::Scanner::new(contents);
     let tokens = scanner.scan_tokens()?;
 
     let mut parser = parser::Parser::new(tokens);
