@@ -5,8 +5,6 @@ mod interpreter;
 mod stmt;
 mod environment;
 
-//use crate::scanner::*;
-
 use std::env;
 use std::fs;
 use std::io::{self, BufRead, Write};
@@ -58,15 +56,14 @@ fn run_prompt() -> Result<(), String> {
         let stdin = io::stdin();
         let mut handle = stdin.lock();
         match handle.read_line(&mut buffer) {
-            Ok(_) => {
-                buffer = buffer.trim().to_string();
-                if buffer.len() == 0 {
+            Ok(n) => {
+                if n < 1 {
                     return Ok(());
                 }
             }
-
             Err(_) => return Err("count not read line".to_string()),
         }
+
         println!("got: {}", buffer);
         match run(&mut interp, &buffer) {
             Ok(_) => (),
