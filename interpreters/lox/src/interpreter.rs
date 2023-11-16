@@ -13,22 +13,18 @@ impl Interpreter {
         };
     }
 
-    pub fn interpret_exp(&mut self, exp: expr::Expr) -> Result<expr::LiteralValue, String> {
-        return exp.evaluate();
-    }
-
     pub fn interpret(&mut self, statements: Vec<stmt::Stmt>) -> Result<(), String> {
         for statement in statements {
             match statement {
                 stmt::Stmt::Expression { expression } => {
-                    expression.evaluate()?;
+                    expression.evaluate(&self.environment)?;
                 }
                 stmt::Stmt::Print { expression } => {
-                    let value = expression.evaluate()?;
+                    let value = expression.evaluate(&self.environment)?;
                     println!("{:?}", value);
                 }
                 stmt::Stmt::Var { name, initializer } => {
-                    let value = initializer.evaluate()?;
+                    let value = initializer.evaluate(&self.environment)?;
                     self.environment.define(name.lexeme, value);
                 }
             };

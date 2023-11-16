@@ -16,8 +16,8 @@ impl Environment {
         self.values.insert(name, value);
     }
 
-    pub fn get(&self, name: String) -> Option<&expr::LiteralValue> {
-        return self.values.get(&name);
+    pub fn get(&self, name: &str) -> Option<&expr::LiteralValue> {
+        return self.values.get(name);
     }
 }
 

@@ -1,4 +1,5 @@
 use crate::scanner;
+use crate::environment;
 
 fn unwrap_as_f32(literal: Option<scanner::LiteralValue>) -> f32 {
     match literal {
@@ -109,13 +110,18 @@ impl Expr {
         }
     }
 
-    pub fn evaluate(&self) -> Result<LiteralValue, String> {
+    pub fn evaluate(&self, env: &environment::Environment) -> Result<LiteralValue, String> {
         match self {
-            Expr::Variable { name: name } => todo!(),
+            Expr::Variable { name: name } => {
+                match env.get(&name.lexeme) {
+                    Some(value) => Ok(value.clone()),
+                    None => Err(format!("variable '{}' has not been declared", name.lexeme)),
+                }
+            },
             Expr::Literal { value } => Ok((*value).clone()),
-            Expr::Grouping { expression } => expression.evaluate(),
+            Expr::Grouping { expression } => expression.evaluate(env),
             Expr::Unary { operator, right } => {
-                let right = right.evaluate()?;
+                let right = right.evaluate(env)?;
 
                 match (&right, operator.token_type) {
                     (LiteralValue::Number(x), scanner::TokenType::Minus) => Ok(LiteralValue::Number(-x)),
@@ -125,8 +131,8 @@ impl Expr {
                 }
             },
             Expr::Binary { left, operator, right } => {
-                let left = left.evaluate()?;
-                let right = right.evaluate()?;
+                let left = left.evaluate(env)?;
+                let right = right.evaluate(env)?;
 
                 match (&left, operator.token_type, &right) {
                     (
