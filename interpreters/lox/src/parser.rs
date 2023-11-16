@@ -20,7 +20,7 @@ impl Parser {
         let mut errs = vec![];
 
         while !self.is_at_end() {
-            let stmt = self.statement();
+            let stmt = self.declaration();
             match stmt {
                 Ok(s) => stmts.push(s),
                 Err(msg) => errs.push(msg),
@@ -32,6 +32,37 @@ impl Parser {
         } else {
             return Err(errs.join("\n"));
         }
+    }
+
+    fn declaration(&mut self) -> Result<stmt::Stmt, String> {
+        if self.match_token(scanner::TokenType::Var) {
+            match self.var_declaration() {
+                Ok(statement) => {
+                    return Ok(statement);
+                },
+                Err(msg) =>  {
+                    self.synchronize();
+                    return Err(msg);
+                }
+            }
+        } else {
+            return self.statement();
+        }
+    }
+
+    fn var_declaration(&mut self) -> Result<stmt::Stmt, String> {
+        let token = self.consume(scanner::TokenType::Identifier, "expected variable name")?;
+
+        let initializer;
+        if self.match_token(scanner::TokenType::Equal) {
+            initializer = self.expression()?;
+        } else {
+            initializer = expr::Expr::Literal{ value: expr::LiteralValue::Nil };
+        }
+
+        self.consume(scanner::TokenType::Semicolon, "expected ';' after variable declaration")?;
+
+        return Ok(stmt::Stmt::Var { name: token, initializer: initializer });
     }
 
     fn statement(&mut self) -> Result<stmt::Stmt, String> {
@@ -182,11 +213,12 @@ impl Parser {
         return Ok(result);
     }
 
-    fn consume(&mut self, token_type: scanner::TokenType, msg: &str) -> Result<(), String> {
+    fn consume(&mut self, token_type: scanner::TokenType, msg: &str) -> Result<scanner::Token, String> {
         let token = self.peek();
         if token.token_type == token_type {
             self.advance();
-            return Ok(());
+            let token = self.previous();
+            return Ok(token);
         } else {
             return Err(msg.to_string());
         }
