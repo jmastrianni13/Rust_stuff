@@ -24,6 +24,7 @@ impl Interpreter {
                     let value = expression.evaluate()?;
                     println!("{:?}", value);
                 }
+                stmt::Stmt::Var { name, initializer } => todo!(),
             };
         }
 
