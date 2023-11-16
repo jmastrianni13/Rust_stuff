@@ -1,13 +1,16 @@
 use crate::expr;
 use crate::stmt;
+use crate::environment;
 
 pub struct Interpreter {
-    // Global state
+    environment: environment::Environment,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
-        return Self { };
+        return Self {
+            environment: environment::Environment::new(),
+        };
     }
 
     pub fn interpret_exp(&mut self, exp: expr::Expr) -> Result<expr::LiteralValue, String> {
@@ -24,7 +27,10 @@ impl Interpreter {
                     let value = expression.evaluate()?;
                     println!("{:?}", value);
                 }
-                stmt::Stmt::Var { name, initializer } => todo!(),
+                stmt::Stmt::Var { name, initializer } => {
+                    let value = initializer.evaluate()?;
+                    self.environment.define(name.lexeme, value);
+                }
             };
         }
 
