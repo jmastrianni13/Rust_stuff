@@ -207,6 +207,10 @@ impl Parser {
                     value: expr::LiteralValue::from_token(token)
                 };
             },
+            scanner::TokenType::Var => {
+                self.advance();
+                result = expr::Expr::Variable { name: self.previous() };
+            }
             _ => return Err("expected expression".to_string()),
         }
 
