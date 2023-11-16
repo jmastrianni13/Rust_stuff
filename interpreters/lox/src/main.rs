@@ -45,6 +45,7 @@ fn run_file(path: &str) -> Result<(), String> {
 
 fn run_prompt() -> Result<(), String> {
     let mut interp = interpreter::Interpreter::new();
+    let mut buffer = String::new();
     loop {
         print!("> ");
         match io::stdout().flush() {
@@ -52,9 +53,9 @@ fn run_prompt() -> Result<(), String> {
             Err(_) => return Err("could not flush stdout".to_string()),
         }
 
-        let mut buffer = String::new();
         let stdin = io::stdin();
         let mut handle = stdin.lock();
+        let current_length = buffer.len();
         match handle.read_line(&mut buffer) {
             Ok(n) => {
                 if n < 1 {
@@ -64,8 +65,8 @@ fn run_prompt() -> Result<(), String> {
             Err(_) => return Err("count not read line".to_string()),
         }
 
-        println!("got: {}", buffer);
-        match run(&mut interp, &buffer) {
+        println!("got: {}", &buffer[current_length..]);
+        match run(&mut interp, &buffer[current_length..]) {
             Ok(_) => (),
             Err(msg) => println!("{}", msg),
         }
@@ -74,7 +75,8 @@ fn run_prompt() -> Result<(), String> {
 
 fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), String> {
     let mut scanner = scanner::Scanner::new(contents);
-    let tokens = scanner.scan_tokens()?;
+    scanner.scan_tokens()?;
+    let tokens = scanner.tokens;
 
     let mut parser = parser::Parser::new(tokens);
     let statements = parser.parse()?;

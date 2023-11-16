@@ -37,9 +37,9 @@ fn get_keywords_hashmap() -> HashMap<&'static str, TokenType> {
     ]);
 }
 
-pub struct Scanner {
-    source: String,
-    tokens: Vec<Token>,
+pub struct Scanner<'a> {
+    source: &'a str,
+    pub tokens: Vec<Token>,
     start: usize,
     current: usize,
     line: usize,
@@ -47,10 +47,10 @@ pub struct Scanner {
     keywords: HashMap<&'static str, TokenType>,
 }
 
-impl Scanner {
-    pub fn new(source: &str) -> Self {
+impl<'a> Scanner<'a> {
+    pub fn new(source: &'a str) -> Self {
         return Self {
-            source: source.to_string(),
+            source: source,
             tokens: vec![],
             start: 0,
             current: 0,
@@ -59,7 +59,7 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(self: &mut Self) -> Result<Vec<Token>, String> {
+    pub fn scan_tokens(self: &mut Self) -> Result<(), String> {
         let mut errors = vec![];
         while !self.is_at_end() {
             self.start = self.current;
@@ -85,7 +85,7 @@ impl Scanner {
             return Err(joined);
         }
 
-        return Ok(self.tokens.clone());
+        return Ok(())
     }
 
     fn scan_token(self: &mut Self) -> Result<(), String> {
