@@ -2,11 +2,11 @@ use crate::expr;
 use crate::stmt;
 use crate::environment;
 
-pub struct Interpreter {
-    environment: environment::Environment,
+pub struct Interpreter<'a> {
+    environment: environment::Environment<'a>,
 }
 
-impl Interpreter {
+impl<'a> Interpreter<'a> {
     pub fn new() -> Self {
         return Self {
             environment: environment::Environment::new(),

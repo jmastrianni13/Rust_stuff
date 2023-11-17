@@ -9,28 +9,28 @@ fn unwrap_as_f32(literal: Option<scanner::LiteralValue>) -> f32 {
     }
 }
 
-fn unwrap_as_string(literal: Option<scanner::LiteralValue>) -> String {
+fn unwrap_as_string(literal: Option<scanner::LiteralValue>) -> &str {
     match literal {
-        Some(scanner::LiteralValue::StringValue(s)) => s.clone(),
-        Some(scanner::LiteralValue::IdentifierVal(s)) => s.clone(),
+        Some(scanner::LiteralValue::StringValue(s)) => s,
+        Some(scanner::LiteralValue::IdentifierVal(s)) => s,
         _ => panic!("cloud not unwrap as string"),
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum LiteralValue {
+pub enum LiteralValue<'a> {
     Number(f32),
-    StringLit(String),
+    StringLit(&'a str),
     True,
     False,
     Nil,
 }
 
-impl LiteralValue {
+impl<'a> LiteralValue<'a> {
     pub fn to_string(&self) -> String {
         match self {
             LiteralValue::Number(x) => x.to_string(),
-            LiteralValue::StringLit(x) => x.clone(),
+            LiteralValue::StringLit(x) => x.to_string(),
             LiteralValue::True => "true".to_string(),
             LiteralValue::False => "false".to_string(),
             LiteralValue::Nil => "nil".to_string(),
@@ -47,7 +47,7 @@ impl LiteralValue {
         }
     }
 
-    pub fn from_token(token: scanner::Token) -> Self {
+    pub fn from_token(token: scanner::Token<'a>) -> Self {
         match token.token_type {
             scanner::TokenType::NumberLit => Self::Number(unwrap_as_f32(token.literal)),
             scanner::TokenType::StringLit => Self::StringLit(unwrap_as_string(token.literal)),
@@ -78,20 +78,20 @@ impl LiteralValue {
 }
 
 #[derive(Debug)]
-pub enum Expr {
-    Assignment { name: scanner::Token, value: Box<Expr> },
-    Binary { left: Box<Expr>, operator: scanner::Token, right: Box<Expr>},
-    Grouping { expression: Box<Expr> },
-    Literal { value: LiteralValue },
-    Unary { operator: scanner::Token, right: Box<Expr> },
-    Variable {name: scanner::Token},
+pub enum Expr<'a> {
+    Assign{ name: scanner::Token<'a>, value: Box<Expr<'a>> },
+    Binary { left: Box<Expr<'a>>, operator: scanner::Token<'a>, right: Box<Expr<'a>>},
+    Grouping { expression: Box<Expr<'a>> },
+    Literal { value: LiteralValue<'a> },
+    Unary { operator: scanner::Token<'a>, right: Box<Expr<'a>> },
+    Variable {name: scanner::Token<'a>},
 }
 
 
-impl Expr {
+impl<'a> Expr<'a> {
     pub fn to_string(&self) -> String{
         match self {
-            Expr::Assignment {name, value } => format!("({name:?} = {})", value.to_string()),
+            Expr::Assign{name, value } => format!("({name:?} = {})", value.to_string()),
             Expr::Binary {
                 left,
                 operator,
@@ -113,9 +113,9 @@ impl Expr {
         }
     }
 
-    pub fn evaluate(&self, env: &mut environment::Environment) -> Result<LiteralValue, String> {
+    pub fn evaluate(&'a self, env: &mut environment::Environment<'a>) -> Result<LiteralValue<'a>, String> {
         match self {
-            Expr::Assignment {
+            Expr::Assign{
                 name,
                 value
             } => {
@@ -209,7 +209,7 @@ impl Expr {
                         LiteralValue::StringLit(s1),
                         scanner::TokenType::Plus,
                         LiteralValue::StringLit(s2)
-                    ) => Ok(LiteralValue::StringLit(format!("{}{}", s1, s2))),
+                    ) => Ok(LiteralValue::StringLit(&format!("{}{}", s1, s2))),
                     (
                         LiteralValue::StringLit(s1),
                         scanner::TokenType::Less,
@@ -256,7 +256,7 @@ mod tests {
     fn pretty_print_ast () {
         let minus_token = scanner::Token {
             token_type: scanner::TokenType::Minus,
-            lexeme: "-".to_string(),
+            lexeme: "-",
             literal: None,
             line_number: 0,
         };
@@ -270,7 +270,7 @@ mod tests {
         };
         let multi = scanner::Token {
             token_type: scanner::TokenType::Star,
-            lexeme: "*".to_string(),
+            lexeme: "*",
             literal: None,
             line_number: 0,
         };

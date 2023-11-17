@@ -2,13 +2,13 @@ use crate::expr;
 use crate::scanner;
 use crate::stmt;
 
-pub struct Parser {
-    tokens: Vec<scanner::Token>,
+pub struct Parser<'a> {
+    tokens: Vec<scanner::Token<'a>>,
     current: usize,
 }
 
-impl Parser {
-    pub fn new(tokens: Vec<scanner::Token>) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(tokens: Vec<scanner::Token<'a>>) -> Self {
         Self {
             tokens: tokens,
             current: 0,
@@ -105,7 +105,7 @@ impl Parser {
 
             match exp {
                 expr::Expr::Variable { name } => {
-                    return Ok(expr::Expr::Assignment { name: name, value: Box::from(value) });
+                    return Ok(expr::Expr::Assign{ name: name, value: Box::from(value) });
                 },
                 _ => Err("invalid assignment target.".to_string()),
             }
@@ -326,28 +326,28 @@ mod tests {
     fn test_addition() {
         let one = scanner::Token{
             token_type: scanner::TokenType::NumberLit,
-            lexeme: "1".to_string(),
+            lexeme: "1",
             literal: Some(LiteralValue::IntValue(1)),
             line_number: 0
         };
 
         let plus = scanner::Token{
             token_type: scanner::TokenType::Plus,
-            lexeme: "+".to_string(),
+            lexeme: "+",
             literal: None,
             line_number: 0
         };
 
         let two = scanner::Token{
             token_type: scanner::TokenType::NumberLit,
-            lexeme: "2".to_string(),
+            lexeme: "2",
             literal: Some(LiteralValue::IntValue(2)),
             line_number: 0
         };
 
         let semicolon = scanner::Token{
             token_type: scanner::TokenType::Semicolon,
-            lexeme: ";".to_string(),
+            lexeme: ";",
             literal: None,
             line_number: 0
         };
@@ -356,7 +356,8 @@ mod tests {
 
         let mut parser = Parser::new(tokens);
         let parsed_exp = parser.parse().unwrap();
-        let string_exp = parsed_exp.to_string();
+        assert_eq!(parsed_exp.len(), 1);
+        let string_exp = parsed_exp[0].tostring();
 
         assert_eq!(string_exp, "(+ 1 2)");
 
@@ -366,10 +367,12 @@ mod tests {
     fn test_comparison () {
         let source = "1 + 2 == 5 + 7";
         let mut scanner = Scanner::new(source);
-        let tokens = scanner.scan_tokens().unwrap();
+        scanner.scan_tokens().unwrap();
+        let tokens = scanner.tokens;
         let mut parser = Parser::new(tokens);
         let parsed_exp = parser.parse().unwrap();
-        let string_exp = parsed_exp.to_string();
+        assert_eq!(parsed_exp.len(), 1);
+        let string_exp = parsed_exp[0].tostring();
 
         assert_eq!(string_exp, "(== (+ 1 2) (+ 5 7))");
     }
@@ -378,10 +381,12 @@ mod tests {
     fn test_eq_with_paren() {
         let source = "1 == (2 + 2)";
         let mut scanner = Scanner::new(source);
-        let tokens = scanner.scan_tokens().unwrap();
+        scanner.scan_tokens().unwrap();
+        let tokens = scanner.tokens;
         let mut parser = Parser::new(tokens);
         let parsed_exp = parser.parse().unwrap();
-        let string_exp = parsed_exp.to_string();
+        assert_eq!(parsed_exp.len(), 1);
+        let string_exp = parsed_exp[0].tostring();
 
         assert_eq!(string_exp, "(== 1 (group (+ 2 2)))");
     }
@@ -390,19 +395,23 @@ mod tests {
     fn test_order_of_op() {
         let source = "2 * 3 + 4";
         let mut scanner = Scanner::new(source);
-        let tokens = scanner.scan_tokens().unwrap();
+        scanner.scan_tokens().unwrap();
+        let tokens = scanner.tokens;
         let mut parser = Parser::new(tokens);
         let parsed_exp = parser.parse().unwrap();
-        let string_exp = parsed_exp.to_string();
+        assert_eq!(parsed_exp.len(), 1);
+        let string_exp = parsed_exp[0].tostring();
 
         assert_eq!(string_exp, "(+ (* 2 3) 4)");
 
         let source = "2 + 3 * 4";
         let mut scanner = Scanner::new(source);
-        let tokens = scanner.scan_tokens().unwrap();
+        scanner.scan_tokens().unwrap();
+        let tokens = scanner.tokens;
         let mut parser = Parser::new(tokens);
         let parsed_exp = parser.parse().unwrap();
-        let string_exp = parsed_exp.to_string();
+        assert_eq!(parsed_exp.len(), 1);
+        let string_exp = parsed_exp[0].tostring();
 
         assert_eq!(string_exp, "(+ 2 (* 3 4))");
     }
