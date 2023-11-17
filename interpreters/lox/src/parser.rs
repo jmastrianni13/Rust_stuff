@@ -2,6 +2,7 @@ use crate::expr;
 use crate::scanner;
 use crate::stmt;
 
+#[derive(Debug)]
 pub struct Parser {
     tokens: Vec<scanner::Token>,
     current: usize,
@@ -352,8 +353,14 @@ mod tests {
             line_number: 0
         };
 
-        let tokens = vec![one, plus, two, semicolon];
+        let eof = scanner::Token{
+            token_type: scanner::TokenType::Eof,
+            lexeme: "".to_string(),
+            literal: None,
+            line_number: 0
+        };
 
+        let tokens = vec![one, plus, two, semicolon, eof];
         let mut parser = Parser::new(tokens);
         let parsed_exp = parser.parse().unwrap();
         assert_eq!(parsed_exp.len(), 1);
@@ -365,7 +372,7 @@ mod tests {
 
     #[test]
     fn test_comparison () {
-        let source = "1 + 2 == 5 + 7";
+        let source = "1 + 2 == 5 + 7;";
         let mut scanner = Scanner::new(source);
         scanner.scan_tokens().unwrap();
         let tokens = scanner.tokens;
@@ -379,7 +386,7 @@ mod tests {
 
     #[test]
     fn test_eq_with_paren() {
-        let source = "1 == (2 + 2)";
+        let source = "1 == (2 + 2);";
         let mut scanner = Scanner::new(source);
         scanner.scan_tokens().unwrap();
         let tokens = scanner.tokens;
@@ -393,7 +400,7 @@ mod tests {
 
     #[test]
     fn test_order_of_op() {
-        let source = "2 * 3 + 4";
+        let source = "2 * 3 + 4;";
         let mut scanner = Scanner::new(source);
         scanner.scan_tokens().unwrap();
         let tokens = scanner.tokens;
@@ -404,7 +411,7 @@ mod tests {
 
         assert_eq!(string_exp, "(+ (* 2 3) 4)");
 
-        let source = "2 + 3 * 4";
+        let source = "2 + 3 * 4;";
         let mut scanner = Scanner::new(source);
         scanner.scan_tokens().unwrap();
         let tokens = scanner.tokens;
