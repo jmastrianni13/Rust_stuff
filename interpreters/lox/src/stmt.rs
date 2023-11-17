@@ -2,13 +2,13 @@ use crate::expr;
 use crate::scanner;
 
 #[derive(Debug)]
-pub enum Stmt<'a> {
-    Expression { expression: expr::Expr<'a> },
-    Print { expression: expr::Expr<'a> },
-    Var { name: scanner::Token<'a>, initializer: expr::Expr<'a> },
+pub enum Stmt {
+    Expression { expression: expr::Expr },
+    Print { expression: expr::Expr },
+    Var { name: scanner::Token, initializer: expr::Expr },
 }
 
-impl<'a> Stmt<'a> {
+impl Stmt {
     pub fn tostring(&self) -> String {
         match self {
             Stmt::Expression { expression } => expression.to_string(),

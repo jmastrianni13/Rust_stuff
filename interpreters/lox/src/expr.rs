@@ -9,28 +9,28 @@ fn unwrap_as_f32(literal: Option<scanner::LiteralValue>) -> f32 {
     }
 }
 
-fn unwrap_as_string(literal: Option<scanner::LiteralValue>) -> &str {
+fn unwrap_as_string(literal: Option<scanner::LiteralValue>) -> String {
     match literal {
-        Some(scanner::LiteralValue::StringValue(s)) => s,
-        Some(scanner::LiteralValue::IdentifierVal(s)) => s,
+        Some(scanner::LiteralValue::StringValue(s)) => s.clone(),
+        Some(scanner::LiteralValue::IdentifierVal(s)) => s.clone(),
         _ => panic!("cloud not unwrap as string"),
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum LiteralValue<'a> {
+pub enum LiteralValue {
     Number(f32),
-    StringLit(&'a str),
+    StringLit(String),
     True,
     False,
     Nil,
 }
 
-impl<'a> LiteralValue<'a> {
+impl LiteralValue {
     pub fn to_string(&self) -> String {
         match self {
             LiteralValue::Number(x) => x.to_string(),
-            LiteralValue::StringLit(x) => x.to_string(),
+            LiteralValue::StringLit(x) => x.clone(),
             LiteralValue::True => "true".to_string(),
             LiteralValue::False => "false".to_string(),
             LiteralValue::Nil => "nil".to_string(),
@@ -47,7 +47,7 @@ impl<'a> LiteralValue<'a> {
         }
     }
 
-    pub fn from_token(token: scanner::Token<'a>) -> Self {
+    pub fn from_token(token: scanner::Token) -> Self {
         match token.token_type {
             scanner::TokenType::NumberLit => Self::Number(unwrap_as_f32(token.literal)),
             scanner::TokenType::StringLit => Self::StringLit(unwrap_as_string(token.literal)),
@@ -78,17 +78,17 @@ impl<'a> LiteralValue<'a> {
 }
 
 #[derive(Debug)]
-pub enum Expr<'a> {
-    Assign{ name: scanner::Token<'a>, value: Box<Expr<'a>> },
-    Binary { left: Box<Expr<'a>>, operator: scanner::Token<'a>, right: Box<Expr<'a>>},
-    Grouping { expression: Box<Expr<'a>> },
-    Literal { value: LiteralValue<'a> },
-    Unary { operator: scanner::Token<'a>, right: Box<Expr<'a>> },
-    Variable {name: scanner::Token<'a>},
+pub enum Expr {
+    Assign{ name: scanner::Token, value: Box<Expr> },
+    Binary { left: Box<Expr>, operator: scanner::Token, right: Box<Expr>},
+    Grouping { expression: Box<Expr> },
+    Literal { value: LiteralValue },
+    Unary { operator: scanner::Token, right: Box<Expr> },
+    Variable {name: scanner::Token},
 }
 
 
-impl<'a> Expr<'a> {
+impl Expr {
     pub fn to_string(&self) -> String{
         match self {
             Expr::Assign{name, value } => format!("({name:?} = {})", value.to_string()),
@@ -113,7 +113,7 @@ impl<'a> Expr<'a> {
         }
     }
 
-    pub fn evaluate(&'a self, env: &mut environment::Environment<'a>) -> Result<LiteralValue<'a>, String> {
+    pub fn evaluate(&self, env: &mut environment::Environment) -> Result<LiteralValue, String> {
         match self {
             Expr::Assign{
                 name,
@@ -209,7 +209,7 @@ impl<'a> Expr<'a> {
                         LiteralValue::StringLit(s1),
                         scanner::TokenType::Plus,
                         LiteralValue::StringLit(s2)
-                    ) => Ok(LiteralValue::StringLit(&format!("{}{}", s1, s2))),
+                    ) => Ok(LiteralValue::StringLit(format!("{}{}", s1, s2))),
                     (
                         LiteralValue::StringLit(s1),
                         scanner::TokenType::Less,
@@ -256,7 +256,7 @@ mod tests {
     fn pretty_print_ast () {
         let minus_token = scanner::Token {
             token_type: scanner::TokenType::Minus,
-            lexeme: "-",
+            lexeme: "-".to_string(),
             literal: None,
             line_number: 0,
         };
@@ -270,7 +270,7 @@ mod tests {
         };
         let multi = scanner::Token {
             token_type: scanner::TokenType::Star,
-            lexeme: "*",
+            lexeme: "*".to_string(),
             literal: None,
             line_number: 0,
         };

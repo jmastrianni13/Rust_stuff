@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 use crate::expr;
 
-pub struct Environment<'a> {
-    values: HashMap<&'a str, expr::LiteralValue<'a>>,
+pub struct Environment {
+    values: HashMap<String, expr::LiteralValue>,
 }
 
-impl<'a> Environment<'a> {
+impl Environment {
     pub fn new() -> Self {
         return Self {
             values: HashMap::new()
         };
     }
 
-    pub fn define(&mut self, name: &'a str, value: expr::LiteralValue<'a>) {
+    pub fn define(&mut self, name: String, value: expr::LiteralValue) {
         self.values.insert(name, value);
     }
 
-    pub fn get(&self, name: &str) -> Option<&expr::LiteralValue<'a>> {
+    pub fn get(&self, name: &str) -> Option<&expr::LiteralValue> {
         return self.values.get(name);
     }
 }

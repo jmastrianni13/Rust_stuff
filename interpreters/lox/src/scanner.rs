@@ -39,7 +39,7 @@ fn get_keywords_hashmap() -> HashMap<&'static str, TokenType> {
 
 pub struct Scanner<'a> {
     source: &'a str,
-    pub tokens: Vec<Token<'a>>,
+    pub tokens: Vec<Token>,
     start: usize,
     current: usize,
     line: usize,
@@ -71,7 +71,7 @@ impl<'a> Scanner<'a> {
 
         self.tokens.push(Token {
             token_type: TokenType::Eof,
-            lexeme: "",
+            lexeme: "".to_string(),
             literal: None,
             line_number: self.line,
         });
@@ -222,7 +222,7 @@ impl<'a> Scanner<'a> {
 
         let value = &self.source[self.start + 1..self.current - 1];
 
-        self.add_token_lit(TokenType::StringLit, Some(LiteralValue::StringValue(value)));
+        self.add_token_lit(TokenType::StringLit, Some(LiteralValue::StringValue(value.to_string())));
 
         return Ok(());
 
@@ -267,8 +267,8 @@ impl<'a> Scanner<'a> {
         self.add_token_lit(token_type, None);
     }
 
-    fn add_token_lit(self: &mut Self, token_type: TokenType, literal: Option<LiteralValue<'a>>) {
-        let text = &self.source[self.start..self.current];
+    fn add_token_lit(self: &mut Self, token_type: TokenType, literal: Option<LiteralValue>) {
+        let text = self.source[self.start..self.current].to_string();
 
         self.tokens.push(Token {
             token_type: token_type,
@@ -284,15 +284,15 @@ impl<'a> Scanner<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Token<'a> {
+pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: &'a str,
-    pub literal: Option<LiteralValue<'a>>,
+    pub lexeme: String,
+    pub literal: Option<LiteralValue>,
     pub line_number: usize,
 }
 
-impl<'a> Token<'a> {
-    pub fn new(token_type: TokenType, lexeme: &'a str, literal: Option<LiteralValue<'a>>, line_number: usize) -> Self {
+impl Token {
+    pub fn new(token_type: TokenType, lexeme: String, literal: Option<LiteralValue>, line_number: usize) -> Self {
         Self {
             token_type,
             lexeme,
@@ -308,11 +308,11 @@ impl<'a> Token<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub enum LiteralValue<'a> {
+pub enum LiteralValue {
     IntValue(i64),
     FValue(f64),
-    StringValue(&'a str),
-    IdentifierVal(&'a str)
+    StringValue(String),
+    IdentifierVal(String)
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -419,7 +419,7 @@ mod tests {
         assert_eq!(scanner.tokens[0].token_type, TokenType::StringLit);
         assert_eq!(scanner.tokens[1].token_type, TokenType::Eof);
         match scanner.tokens[0].literal.as_ref().unwrap() {
-            LiteralValue::StringValue(val) => assert_eq!(val, &"ABC"),
+            LiteralValue::StringValue(val) => assert_eq!(val, "ABC"),
             _ => panic!("Incorrect literal type"),
         }
     }
@@ -448,7 +448,7 @@ mod tests {
         assert_eq!(scanner.tokens[0].token_type, TokenType::StringLit);
         assert_eq!(scanner.tokens[1].token_type, TokenType::Eof);
         match scanner.tokens[0].literal.as_ref().unwrap() {
-            LiteralValue::StringValue(val) => assert_eq!(val, &"ABC\ndef\n123"),
+            LiteralValue::StringValue(val) => assert_eq!(val, "ABC\ndef\n123"),
             _ => panic!("Incorrect literal type"),
         }
     }

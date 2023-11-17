@@ -2,13 +2,13 @@ use crate::expr;
 use crate::scanner;
 use crate::stmt;
 
-pub struct Parser<'a> {
-    tokens: Vec<scanner::Token<'a>>,
+pub struct Parser {
+    tokens: Vec<scanner::Token>,
     current: usize,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<scanner::Token<'a>>) -> Self {
+impl Parser {
+    pub fn new(tokens: Vec<scanner::Token>) -> Self {
         Self {
             tokens: tokens,
             current: 0,
@@ -326,28 +326,28 @@ mod tests {
     fn test_addition() {
         let one = scanner::Token{
             token_type: scanner::TokenType::NumberLit,
-            lexeme: "1",
+            lexeme: "1".to_string(),
             literal: Some(LiteralValue::IntValue(1)),
             line_number: 0
         };
 
         let plus = scanner::Token{
             token_type: scanner::TokenType::Plus,
-            lexeme: "+",
+            lexeme: "+".to_string(),
             literal: None,
             line_number: 0
         };
 
         let two = scanner::Token{
             token_type: scanner::TokenType::NumberLit,
-            lexeme: "2",
+            lexeme: "2".to_string(),
             literal: Some(LiteralValue::IntValue(2)),
             line_number: 0
         };
 
         let semicolon = scanner::Token{
             token_type: scanner::TokenType::Semicolon,
-            lexeme: ";",
+            lexeme: ";".to_string(),
             literal: None,
             line_number: 0
         };
