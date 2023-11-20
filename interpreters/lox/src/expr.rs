@@ -119,6 +119,14 @@ impl Expr {
                 name,
                 value
             } => {
+                let new_value = (*value).evaluate(env)?;
+                let assign_success = env.assign(&name.lexeme, new_value.clone());
+                if assign_success {
+                    return Ok(new_value);
+                } else {
+                    return Err(format!("variable {name:?} has not been declared"));
+                }
+
                 let get_value = env.get(&name.lexeme);
                 match get_value {
                     Some(_) => {
