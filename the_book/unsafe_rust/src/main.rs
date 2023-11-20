@@ -1,5 +1,6 @@
 fn main() {
     demo_raw_pointers();
+    demo_unsafe_functions();
 }
 
 fn demo_raw_pointers() {
@@ -20,5 +21,13 @@ fn demo_raw_pointers() {
     unsafe {
         println!("r1 is: {}", *r1);
         println!("r2 is: {}", *r2);
+    }
+}
+
+fn demo_unsafe_functions() {
+    unsafe fn dangerous() {}
+
+    unsafe {
+        dangerous();
     }
 }
