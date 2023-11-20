@@ -124,7 +124,7 @@ impl Expr {
                 if assign_success {
                     return Ok(new_value);
                 } else {
-                    return Err(format!("variable {name:?} has not been declared"));
+                    return Err(format!("variable '{}' has not been declared", name.lexeme));
                 }
 
                 let get_value = env.get(&name.lexeme);
@@ -134,7 +134,7 @@ impl Expr {
                         env.define(name.lexeme.clone(), new_value.clone());
                         return Ok(new_value);
                     }
-                    None => Err(format!("variable {name:?} has not been declared")),
+                    None => Err(format!("variable '{}' has not been declared", name.lexeme)),
                 }
             },
             Expr::Variable { name: name } => {
