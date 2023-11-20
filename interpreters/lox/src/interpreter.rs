@@ -26,6 +26,7 @@ impl Interpreter {
                     let value = initializer.evaluate(&mut self.environment)?;
                     self.environment.define(name.lexeme, value);
                 }
+                stmt::Stmt::Block { statements } => todo!(),
             };
         }
 

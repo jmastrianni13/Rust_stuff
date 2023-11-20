@@ -6,6 +6,7 @@ pub enum Stmt {
     Expression { expression: expr::Expr },
     Print { expression: expr::Expr },
     Var { name: scanner::Token, initializer: expr::Expr },
+    Block { statements: Vec<Stmt> },
 }
 
 impl Stmt {
@@ -14,6 +15,7 @@ impl Stmt {
             Stmt::Expression { expression } => expression.to_string(),
             Stmt::Print { expression } => format!("(print {})", expression.to_string()),
             Stmt::Var { name, initializer } => format!("(var {})", name.lexeme),
+            Stmt::Block { statements } => todo!(),
         }
     }
 }
