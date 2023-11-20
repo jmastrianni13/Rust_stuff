@@ -15,7 +15,10 @@ impl Stmt {
             Stmt::Expression { expression } => expression.to_string(),
             Stmt::Print { expression } => format!("(print {})", expression.to_string()),
             Stmt::Var { name, initializer } => format!("(var {})", name.lexeme),
-            Stmt::Block { statements } => todo!(),
+            Stmt::Block { statements } => format!(
+                "(block {})",
+                statements.into_iter().map(|stmt| stmt.tostring()).collect::<String>()
+                ),
         }
     }
 }
