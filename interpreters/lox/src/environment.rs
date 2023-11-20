@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::expr;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Environment {
@@ -12,7 +12,7 @@ impl Environment {
         return Self {
             values: HashMap::new(),
             enclosing: None,
-        }
+        };
     }
 
     pub fn define(&mut self, name: String, value: expr::LiteralValue) {
@@ -36,7 +36,7 @@ impl Environment {
             (Some(_), _) => {
                 self.values.insert(name.to_string(), value);
                 return true;
-            },
+            }
             (None, Some(env)) => Rc::get_mut(&mut env.clone())
                 .expect("could not get a mutable ref to env")
                 .assign(name, value),
@@ -53,4 +53,3 @@ mod tests {
         let environment = Environment::new();
     }
 }
-

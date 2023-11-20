@@ -32,7 +32,7 @@ impl Parser {
         }
 
         if errs.len() == 0 {
-            return Ok(stmts)
+            return Ok(stmts);
         } else {
             return Err(errs.join("\n"));
         }
@@ -43,8 +43,8 @@ impl Parser {
             match self.var_declaration() {
                 Ok(statement) => {
                     return Ok(statement);
-                },
-                Err(msg) =>  {
+                }
+                Err(msg) => {
                     return Err(msg);
                 }
             }
@@ -60,12 +60,20 @@ impl Parser {
         if self.match_token(scanner::TokenType::Equal) {
             initializer = self.expression()?;
         } else {
-            initializer = expr::Expr::Literal{ value: expr::LiteralValue::Nil };
+            initializer = expr::Expr::Literal {
+                value: expr::LiteralValue::Nil,
+            };
         }
 
-        self.consume(scanner::TokenType::Semicolon, "expected ';' after variable declaration")?;
+        self.consume(
+            scanner::TokenType::Semicolon,
+            "expected ';' after variable declaration",
+        )?;
 
-        return Ok(stmt::Stmt::Var { name: token, initializer: initializer });
+        return Ok(stmt::Stmt::Var {
+            name: token,
+            initializer: initializer,
+        });
     }
 
     fn statement(&mut self) -> Result<stmt::Stmt, String> {
@@ -83,7 +91,10 @@ impl Parser {
     fn if_statement(&mut self) -> Result<stmt::Stmt, String> {
         self.consume(scanner::TokenType::LeftParen, "expected '(' after 'if'")?;
         let predicate = self.expression()?;
-        self.consume(scanner::TokenType::RightParen, "expected ')' after if-predicate")?;
+        self.consume(
+            scanner::TokenType::RightParen,
+            "expected ')' after if-predicate",
+        )?;
 
         let then = Box::new(self.statement()?);
 
@@ -94,7 +105,11 @@ impl Parser {
             None
         };
 
-        return Ok(stmt::Stmt::IfStmt { predicate, then, els });
+        return Ok(stmt::Stmt::IfStmt {
+            predicate,
+            then,
+            els,
+        });
     }
 
     fn block_statement(&mut self) -> Result<stmt::Stmt, String> {
@@ -107,24 +122,22 @@ impl Parser {
 
         self.consume(scanner::TokenType::RightBrace, "expected '}' after a block")?;
 
-        return Ok(stmt::Stmt::Block{ statements });
+        return Ok(stmt::Stmt::Block { statements });
     }
 
     fn print_statement(&mut self) -> Result<stmt::Stmt, String> {
         let value = self.expression()?;
         self.consume(scanner::TokenType::Semicolon, "Expected a ';' after value.")?;
-        return Ok(stmt::Stmt::Print {
-            expression: value
-        });
+        return Ok(stmt::Stmt::Print { expression: value });
     }
 
     fn expression_statement(&mut self) -> Result<stmt::Stmt, String> {
         let exp = self.expression()?;
-        self.consume(scanner::TokenType::Semicolon, "Expected a ';' after expression.")?;
-        return Ok(stmt::Stmt::Expression {
-            expression: exp
-        });
-
+        self.consume(
+            scanner::TokenType::Semicolon,
+            "Expected a ';' after expression.",
+        )?;
+        return Ok(stmt::Stmt::Expression { expression: exp });
     }
 
     fn expression(&mut self) -> Result<expr::Expr, String> {
@@ -140,8 +153,11 @@ impl Parser {
 
             match exp {
                 expr::Expr::Variable { name } => {
-                    return Ok(expr::Expr::Assign{ name: name, value: Box::from(value) });
-                },
+                    return Ok(expr::Expr::Assign {
+                        name: name,
+                        value: Box::from(value),
+                    });
+                }
                 _ => Err("invalid assignment target.".to_string()),
             }
         } else {
@@ -152,7 +168,10 @@ impl Parser {
     fn equality(&mut self) -> Result<expr::Expr, String> {
         let mut exp = self.comparison()?;
 
-        while self.match_tokens(&[scanner::TokenType::BangEqual, scanner::TokenType::EqualEqual]) {
+        while self.match_tokens(&[
+            scanner::TokenType::BangEqual,
+            scanner::TokenType::EqualEqual,
+        ]) {
             let operator = self.previous();
             let rhs = self.comparison()?;
             exp = expr::Expr::Binary {
@@ -167,50 +186,43 @@ impl Parser {
     fn comparison(&mut self) -> Result<expr::Expr, String> {
         let mut exp = self.term()?;
 
-        while self.match_tokens(
-            &[
+        while self.match_tokens(&[
             scanner::TokenType::Greater,
             scanner::TokenType::GreaterEqual,
             scanner::TokenType::Less,
             scanner::TokenType::LessEqual,
-            ]) {
-                let op = self.previous();
-                let rhs = self.term()?;
-                exp = expr::Expr::Binary {
-                    left: Box::from(exp),
-                    operator: op,
-                    right: Box::from(rhs),
-                }
+        ]) {
+            let op = self.previous();
+            let rhs = self.term()?;
+            exp = expr::Expr::Binary {
+                left: Box::from(exp),
+                operator: op,
+                right: Box::from(rhs),
+            }
         }
 
         return Ok(exp);
     }
 
     fn term(&mut self) -> Result<expr::Expr, String> {
-       let mut exp = self.factor()?;
+        let mut exp = self.factor()?;
 
-       while self.match_tokens(&[
-                               scanner::TokenType::Minus,
-                               scanner::TokenType::Plus
-       ]) {
-           let op = self.previous();
-           let rhs = self.factor()?;
-           exp = expr::Expr::Binary {
-               left: Box::from(exp),
-               operator: op,
-               right: Box::from(rhs),
-           };
-       }
+        while self.match_tokens(&[scanner::TokenType::Minus, scanner::TokenType::Plus]) {
+            let op = self.previous();
+            let rhs = self.factor()?;
+            exp = expr::Expr::Binary {
+                left: Box::from(exp),
+                operator: op,
+                right: Box::from(rhs),
+            };
+        }
 
-       return Ok(exp);
+        return Ok(exp);
     }
 
     fn factor(&mut self) -> Result<expr::Expr, String> {
         let mut exp = self.unary()?;
-        while self.match_tokens(&[
-                                scanner::TokenType::Slash,
-                                scanner::TokenType::Star
-        ]) {
+        while self.match_tokens(&[scanner::TokenType::Slash, scanner::TokenType::Star]) {
             let op = self.previous();
             let rhs = self.unary()?;
             exp = expr::Expr::Binary {
@@ -224,15 +236,12 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Result<expr::Expr, String> {
-        if self.match_tokens(&[
-                             scanner::TokenType::Bang,
-                             scanner::TokenType::Minus,
-        ]) {
+        if self.match_tokens(&[scanner::TokenType::Bang, scanner::TokenType::Minus]) {
             let op = self.previous();
             let rhs = self.unary()?;
             return Ok(expr::Expr::Unary {
                 operator: op,
-                right: Box::from(rhs)
+                right: Box::from(rhs),
             });
         } else {
             return self.primary();
@@ -249,22 +258,24 @@ impl Parser {
                 let exp = self.expression()?;
                 self.consume(scanner::TokenType::RightParen, "expected ')'")?;
                 result = expr::Expr::Grouping {
-                    expression: Box::from(exp)
+                    expression: Box::from(exp),
                 };
-            },
-            scanner::TokenType::False |
-            scanner::TokenType::True |
-            scanner::TokenType::Nil |
-            scanner::TokenType::NumberLit |
-            scanner::TokenType::StringLit => {
+            }
+            scanner::TokenType::False
+            | scanner::TokenType::True
+            | scanner::TokenType::Nil
+            | scanner::TokenType::NumberLit
+            | scanner::TokenType::StringLit => {
                 self.advance();
                 result = expr::Expr::Literal {
-                    value: expr::LiteralValue::from_token(token)
+                    value: expr::LiteralValue::from_token(token),
                 };
-            },
+            }
             scanner::TokenType::Identifier => {
                 self.advance();
-                result = expr::Expr::Variable { name: self.previous() };
+                result = expr::Expr::Variable {
+                    name: self.previous(),
+                };
             }
             _ => return Err("expected expression".to_string()),
         }
@@ -272,7 +283,11 @@ impl Parser {
         return Ok(result);
     }
 
-    fn consume(&mut self, token_type: scanner::TokenType, msg: &str) -> Result<scanner::Token, String> {
+    fn consume(
+        &mut self,
+        token_type: scanner::TokenType,
+        msg: &str,
+    ) -> Result<scanner::Token, String> {
         let token = self.peek();
         if token.token_type == token_type {
             self.advance();
@@ -283,7 +298,7 @@ impl Parser {
         }
     }
 
-    fn check(&mut self,  typ: scanner::TokenType) -> bool {
+    fn check(&mut self, typ: scanner::TokenType) -> bool {
         return self.peek().token_type == typ;
     }
 
@@ -316,7 +331,6 @@ impl Parser {
         }
 
         return self.previous();
-
     }
 
     fn peek(&mut self) -> scanner::Token {
@@ -340,14 +354,14 @@ impl Parser {
             }
 
             match self.peek().token_type {
-                scanner::TokenType::Class |
-                scanner::TokenType::Fun |
-                scanner::TokenType::Var |
-                scanner::TokenType::For |
-                scanner::TokenType::If |
-                scanner::TokenType::While |
-                scanner::TokenType::Print |
-                scanner::TokenType::Return  => return,
+                scanner::TokenType::Class
+                | scanner::TokenType::Fun
+                | scanner::TokenType::Var
+                | scanner::TokenType::For
+                | scanner::TokenType::If
+                | scanner::TokenType::While
+                | scanner::TokenType::Print
+                | scanner::TokenType::Return => return,
                 _ => (),
             }
 
@@ -363,39 +377,39 @@ mod tests {
 
     #[test]
     fn test_addition() {
-        let one = scanner::Token{
+        let one = scanner::Token {
             token_type: scanner::TokenType::NumberLit,
             lexeme: "1".to_string(),
             literal: Some(LiteralValue::IntValue(1)),
-            line_number: 0
+            line_number: 0,
         };
 
-        let plus = scanner::Token{
+        let plus = scanner::Token {
             token_type: scanner::TokenType::Plus,
             lexeme: "+".to_string(),
             literal: None,
-            line_number: 0
+            line_number: 0,
         };
 
-        let two = scanner::Token{
+        let two = scanner::Token {
             token_type: scanner::TokenType::NumberLit,
             lexeme: "2".to_string(),
             literal: Some(LiteralValue::IntValue(2)),
-            line_number: 0
+            line_number: 0,
         };
 
-        let semicolon = scanner::Token{
+        let semicolon = scanner::Token {
             token_type: scanner::TokenType::Semicolon,
             lexeme: ";".to_string(),
             literal: None,
-            line_number: 0
+            line_number: 0,
         };
 
-        let eof = scanner::Token{
+        let eof = scanner::Token {
             token_type: scanner::TokenType::Eof,
             lexeme: "".to_string(),
             literal: None,
-            line_number: 0
+            line_number: 0,
         };
 
         let tokens = vec![one, plus, two, semicolon, eof];
@@ -405,11 +419,10 @@ mod tests {
         let string_exp = parsed_exp[0].tostring();
 
         assert_eq!(string_exp, "(+ 1 2)");
-
     }
 
     #[test]
-    fn test_comparison () {
+    fn test_comparison() {
         let source = "1 + 2 == 5 + 7;";
         let mut scanner = Scanner::new(source);
         scanner.scan_tokens().unwrap();
@@ -461,4 +474,3 @@ mod tests {
         assert_eq!(string_exp, "(+ 2 (* 3 4))");
     }
 }
-

@@ -36,7 +36,11 @@ impl Stmt {
                     .map(|stmt| stmt.tostring())
                     .collect::<String>()
             ),
-            Stmt::IfStmt { predicate, then, els } => todo!(),
+            Stmt::IfStmt {
+                predicate,
+                then,
+                els,
+            } => todo!(),
         }
     }
 }

@@ -7,9 +7,9 @@ fn is_digit(ch: char) -> bool {
 fn is_alpha(ch: char) -> bool {
     let uch = ch as u8;
 
-    return (uch >= 'a' as u8 && uch <= 'z' as u8) ||
-        (uch >= 'A' as u8 && uch <= 'Z' as u8) ||
-        (ch == '_');
+    return (uch >= 'a' as u8 && uch <= 'z' as u8)
+        || (uch >= 'A' as u8 && uch <= 'Z' as u8)
+        || (ch == '_');
 }
 
 fn is_alpha_numeric(ch: char) -> bool {
@@ -17,23 +17,23 @@ fn is_alpha_numeric(ch: char) -> bool {
 }
 
 fn get_keywords_hashmap() -> HashMap<&'static str, TokenType> {
-    return HashMap::from ([
-                          ("and", TokenType::And),
-                          ("class", TokenType::Class),
-                          ("else", TokenType::Else),
-                          ("false", TokenType::False),
-                          ("for", TokenType::For),
-                          ("fun", TokenType::Fun),
-                          ("if", TokenType::If),
-                          ("nil", TokenType::Nil),
-                          ("or", TokenType::Or),
-                          ("print", TokenType::Print),
-                          ("return", TokenType::Return),
-                          ("super", TokenType::Super),
-                          ("this", TokenType::This),
-                          ("true", TokenType::True),
-                          ("var", TokenType::Var),
-                          ("while", TokenType::While)
+    return HashMap::from([
+        ("and", TokenType::And),
+        ("class", TokenType::Class),
+        ("else", TokenType::Else),
+        ("false", TokenType::False),
+        ("for", TokenType::For),
+        ("fun", TokenType::Fun),
+        ("if", TokenType::If),
+        ("nil", TokenType::Nil),
+        ("or", TokenType::Or),
+        ("print", TokenType::Print),
+        ("return", TokenType::Return),
+        ("super", TokenType::Super),
+        ("this", TokenType::This),
+        ("true", TokenType::True),
+        ("var", TokenType::Var),
+        ("while", TokenType::While),
     ]);
 }
 
@@ -55,8 +55,8 @@ impl<'a> Scanner<'a> {
             start: 0,
             current: 0,
             line: 1,
-            keywords: get_keywords_hashmap()
-        }
+            keywords: get_keywords_hashmap(),
+        };
     }
 
     pub fn scan_tokens(self: &mut Self) -> Result<(), String> {
@@ -81,11 +81,11 @@ impl<'a> Scanner<'a> {
             for error in errors {
                 joined.push_str(&error);
                 joined.push_str("\n");
-            };
+            }
             return Err(joined);
         }
 
-        return Ok(())
+        return Ok(());
     }
 
     fn scan_token(self: &mut Self) -> Result<(), String> {
@@ -110,7 +110,7 @@ impl<'a> Scanner<'a> {
                     TokenType::Bang
                 };
                 self.add_token(token);
-            },
+            }
             '=' => {
                 let token = if self.char_match('=') {
                     // !=
@@ -119,7 +119,7 @@ impl<'a> Scanner<'a> {
                     TokenType::Equal
                 };
                 self.add_token(token);
-            },
+            }
             '<' => {
                 let token = if self.char_match('=') {
                     // !=
@@ -128,7 +128,7 @@ impl<'a> Scanner<'a> {
                     TokenType::Less
                 };
                 self.add_token(token);
-            },
+            }
             '>' => {
                 let token = if self.char_match('=') {
                     // !=
@@ -137,7 +137,7 @@ impl<'a> Scanner<'a> {
                     TokenType::Greater
                 };
                 self.add_token(token);
-            },
+            }
             '/' => {
                 if self.char_match('/') {
                     loop {
@@ -149,8 +149,8 @@ impl<'a> Scanner<'a> {
                 } else {
                     self.add_token(TokenType::Slash);
                 }
-            },
-            ' ' | '\r' | '\t' => {},
+            }
+            ' ' | '\r' | '\t' => {}
             '\n' => self.line += 1,
             '"' => self.string_lit()?,
             c => {
@@ -178,7 +178,6 @@ impl<'a> Scanner<'a> {
         } else {
             self.add_token(TokenType::Identifier);
         }
-
     }
 
     fn number_lit(self: &mut Self) -> Result<(), String> {
@@ -197,12 +196,13 @@ impl<'a> Scanner<'a> {
         let substring = &self.source[self.start..self.current];
         let value = substring.parse::<f64>();
         match value {
-            Ok(value) => self.add_token_lit(TokenType::NumberLit, Some(LiteralValue::FValue(value))),
+            Ok(value) => {
+                self.add_token_lit(TokenType::NumberLit, Some(LiteralValue::FValue(value)))
+            }
             Err(_) => return Err(format!("could not parse number: {}", substring)),
         }
 
         return Ok(());
-
     }
 
     fn string_lit(self: &mut Self) -> Result<(), String> {
@@ -222,10 +222,12 @@ impl<'a> Scanner<'a> {
 
         let value = &self.source[self.start + 1..self.current - 1];
 
-        self.add_token_lit(TokenType::StringLit, Some(LiteralValue::StringValue(value.to_string())));
+        self.add_token_lit(
+            TokenType::StringLit,
+            Some(LiteralValue::StringValue(value.to_string())),
+        );
 
         return Ok(());
-
     }
 
     fn peek(self: &Self) -> char {
@@ -292,7 +294,12 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, literal: Option<LiteralValue>, line_number: usize) -> Self {
+    pub fn new(
+        token_type: TokenType,
+        lexeme: String,
+        literal: Option<LiteralValue>,
+        line_number: usize,
+    ) -> Self {
         Self {
             token_type,
             lexeme,
@@ -303,7 +310,6 @@ impl Token {
 
     pub fn to_string(self: &Self) -> String {
         format!("{} {} {:?}", self.token_type, self.lexeme, self.literal)
-
     }
 }
 
@@ -312,7 +318,7 @@ pub enum LiteralValue {
     IntValue(i64),
     FValue(f64),
     StringValue(String),
-    IdentifierVal(String)
+    IdentifierVal(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -363,7 +369,7 @@ pub enum TokenType {
     Var,
     While,
 
-    Eof
+    Eof,
 }
 
 impl std::fmt::Display for TokenType {
@@ -371,8 +377,6 @@ impl std::fmt::Display for TokenType {
         write!(f, "{:?}", self)
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -435,7 +439,6 @@ mod tests {
             Err(_) => (),
             _ => panic!("unterminated string did not raise error"),
         }
-
     }
 
     #[test]
@@ -492,7 +495,6 @@ mod tests {
         assert_eq!(scanner.tokens[2].token_type, TokenType::NumberLit);
         assert_eq!(scanner.tokens[3].token_type, TokenType::Semicolon);
         assert_eq!(scanner.tokens[4].token_type, TokenType::Eof);
-
     }
 
     #[test]
@@ -515,8 +517,5 @@ mod tests {
         assert_eq!(scanner.tokens[10].token_type, TokenType::RightBrace);
         assert_eq!(scanner.tokens[11].token_type, TokenType::Semicolon);
         assert_eq!(scanner.tokens[12].token_type, TokenType::Eof);
-
     }
-
 }
-

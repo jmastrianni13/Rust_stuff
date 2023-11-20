@@ -1,9 +1,9 @@
-mod scanner;
-mod expr;
-mod parser;
-mod interpreter;
-mod stmt;
 mod environment;
+mod expr;
+mod interpreter;
+mod parser;
+mod scanner;
+mod stmt;
 
 use std::env;
 use std::fs;
@@ -84,4 +84,3 @@ fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), Stri
     interp.interpret(statements)?;
     return Ok(());
 }
-
