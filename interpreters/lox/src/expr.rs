@@ -75,6 +75,16 @@ impl LiteralValue {
             LiteralValue::Nil => LiteralValue::True,
         }
     }
+
+    pub fn is_truthy(&self) -> LiteralValue {
+        match self {
+            LiteralValue::Number(x) => if *x == 0.0 as f32 { LiteralValue::False} else { LiteralValue::True},
+            LiteralValue::StringLit(s) => if s.len() == 0 { LiteralValue::False} else { LiteralValue::True},
+            LiteralValue::True => LiteralValue::True,
+            LiteralValue::False => LiteralValue::False,
+            LiteralValue::Nil => LiteralValue::False,
+        }
+    }
 }
 
 #[derive(Debug)]
