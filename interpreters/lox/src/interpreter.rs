@@ -1,5 +1,6 @@
 use crate::stmt;
 use crate::environment;
+use crate::expr;
 use std::rc::Rc;
 
 pub struct Interpreter {
@@ -48,7 +49,18 @@ impl Interpreter {
                     let block_result = self.interpret(statements);
                     self.environment = old_environment;
 
-                    block_result?;
+                    block_result?; // compiler complains if return keyword is used here
+                }
+                stmt::Stmt::IfStmt { predicate, then, els } => {
+                    let truth_value = predicate.evaluate(
+                        Rc::get_mut(&mut self.environment)
+                        .expect("could not get mutable reference to environment"))?;
+                    if truth_value.is_truthy() == expr::LiteralValue::True {
+                        self.interpret(vec![*then])?;
+                    } else if let Some(els_stmt) = els {
+                        self.interpret(vec![*els_stmt])?;
+                    }
+
                 }
             };
         }

@@ -70,12 +70,31 @@ impl Parser {
 
     fn statement(&mut self) -> Result<stmt::Stmt, String> {
         if self.match_token(scanner::TokenType::Print) {
-            self.print_statement()
+            return self.print_statement();
         } else if self.match_token(scanner::TokenType::LeftBrace) {
-            self.block_statement()
+            return self.block_statement();
+        } else if self.match_token(scanner::TokenType::If) {
+            return self.if_statement();
         } else {
-            self.expression_statement()
+            return self.expression_statement();
         }
+    }
+
+    fn if_statement(&mut self) -> Result<stmt::Stmt, String> {
+        self.consume(scanner::TokenType::LeftParen, "expected '(' after 'if'")?;
+        let predicate = self.expression()?;
+        self.consume(scanner::TokenType::RightParen, "expected ')' after if-predicate")?;
+
+        let then = Box::new(self.statement()?);
+
+        let els = if self.match_token(scanner::TokenType::Else) {
+            let stm = self.statement()?;
+            Some(Box::new(stm))
+        } else {
+            None
+        };
+
+        return Ok(stmt::Stmt::IfStmt { predicate, then, els });
     }
 
     fn block_statement(&mut self) -> Result<stmt::Stmt, String> {
@@ -86,7 +105,7 @@ impl Parser {
             statements.push(decl);
         }
 
-        self.consume(scanner::TokenType::RightBrace, "expected '}' after a block");
+        self.consume(scanner::TokenType::RightBrace, "expected '}' after a block")?;
 
         return Ok(stmt::Stmt::Block{ statements });
     }
