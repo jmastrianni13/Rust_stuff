@@ -28,7 +28,7 @@ impl Interpreter {
                         Rc::get_mut(&mut self.environment)
                             .expect("could not get mutable reference to environment"),
                     )?;
-                    println!("\"{}\"", value.to_string());
+                    println!("{}", value.to_string());
                 }
                 stmt::Stmt::Var { name, initializer } => {
                     let value = initializer.evaluate(
