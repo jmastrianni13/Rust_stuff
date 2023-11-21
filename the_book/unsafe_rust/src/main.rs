@@ -1,3 +1,5 @@
+use std::slice;
+
 fn main() {
     demo_raw_pointers();
     demo_unsafe_functions();
@@ -29,5 +31,21 @@ fn demo_unsafe_functions() {
 
     unsafe {
         dangerous();
+    }
+}
+
+fn demo_unsafe_abstraction() {
+    fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
+        let len = value.len();
+        let ptr = values.as_mut_ptr();
+
+        assert!(mid <= len);
+
+        unsafe {
+            return (
+                slice::from_raw_parts_mut(ptr, mid),
+                slice::from_raw_parts_mut(ptr.add(mid), len - mid),
+                );
+        }
     }
 }
