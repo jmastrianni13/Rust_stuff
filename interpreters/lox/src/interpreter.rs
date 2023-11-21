@@ -14,7 +14,7 @@ impl Interpreter {
         };
     }
 
-    pub fn interpret(&mut self, stmts: Vec<stmt::Stmt>) -> Result<(), String> {
+    pub fn interpret(&mut self, stmts: Vec<&stmt::Stmt>) -> Result<(), String> {
         for stmt in stmts {
             match stmt {
                 stmt::Stmt::Expression { expression } => {
@@ -38,7 +38,7 @@ impl Interpreter {
 
                     Rc::get_mut(&mut self.environment)
                         .expect("could not get mutable reference to environemnt")
-                        .define(name.lexeme, value);
+                        .define(name.lexeme.clone(), value);
                 }
                 stmt::Stmt::Block { statements } => {
                     let mut new_environment = environment::Environment::new();
@@ -46,7 +46,8 @@ impl Interpreter {
 
                     let old_environment = self.environment.clone();
                     self.environment = Rc::new(new_environment);
-                    let block_result = self.interpret(statements);
+                    let block_result =
+                        self.interpret((*statements).iter().map(|b| b.as_ref()).collect());
                     self.environment = old_environment;
 
                     block_result?; // compiler complains if return keyword is used here
@@ -61,9 +62,25 @@ impl Interpreter {
                             .expect("could not get mutable reference to environment"),
                     )?;
                     if truth_value.is_truthy() == expr::LiteralValue::True {
-                        self.interpret(vec![*then])?;
+                        let statements = vec![then.as_ref()];
+                        self.interpret(statements)?;
                     } else if let Some(els_stmt) = els {
-                        self.interpret(vec![*els_stmt])?;
+                        let statements = vec![els_stmt.as_ref()];
+                        self.interpret(statements)?;
+                    }
+                }
+                stmt::Stmt::WhileStmt { condition, body } => {
+                    let mut flag = condition.evaluate(
+                        Rc::get_mut(&mut self.environment)
+                            .expect("could not get mutable ref to env"),
+                    )?;
+                    while flag.is_truthy() == expr::LiteralValue::True {
+                        let statements = vec![body.as_ref()];
+                        self.interpret(statements)?;
+                        flag = condition.evaluate(
+                            Rc::get_mut(&mut self.environment)
+                                .expect("could not get mutable ref to env"),
+                        )?;
                     }
                 }
             };

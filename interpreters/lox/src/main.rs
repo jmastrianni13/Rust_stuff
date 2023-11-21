@@ -81,6 +81,6 @@ fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), Stri
     let mut parser = parser::Parser::new(tokens);
     let statements = parser.parse()?;
 
-    interp.interpret(statements)?;
+    interp.interpret(statements.iter().collect())?;
     return Ok(());
 }
