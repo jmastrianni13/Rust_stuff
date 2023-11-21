@@ -83,9 +83,23 @@ impl Parser {
             return self.block_statement();
         } else if self.match_token(scanner::TokenType::If) {
             return self.if_statement();
+        } else if self.match_token(scanner::TokenType::While) {
+            return self.while_statement();
         } else {
             return self.expression_statement();
         }
+    }
+
+    fn while_statement(&mut self) -> Result<stmt::Stmt, String> {
+        self.consume(scanner::TokenType::LeftParen, "expected '(' after 'while'")?;
+        let condition = self.expression()?;
+        self.consume(scanner::TokenType::RightParen, "expected ')' after 'while'")?;
+        let body = self.statement()?;
+
+        return Ok(stmt::Stmt::WhileStmt {
+            condition,
+            body: Box::new(body),
+        });
     }
 
     fn if_statement(&mut self) -> Result<stmt::Stmt, String> {
@@ -117,7 +131,7 @@ impl Parser {
 
         while !self.check(scanner::TokenType::RightBrace) && !self.is_at_end() {
             let decl = self.declaration()?;
-            statements.push(decl);
+            statements.push(Box::new(decl));
         }
 
         self.consume(scanner::TokenType::RightBrace, "expected '}' after a block")?;

@@ -14,12 +14,16 @@ pub enum Stmt {
         initializer: expr::Expr,
     },
     Block {
-        statements: Vec<Stmt>,
+        statements: Vec<Box<Stmt>>,
     },
     IfStmt {
         predicate: expr::Expr,
         then: Box<Stmt>,
         els: Option<Box<Stmt>>,
+    },
+    WhileStmt {
+        condition: expr::Expr,
+        body: Box<Stmt>,
     },
 }
 
@@ -41,6 +45,7 @@ impl Stmt {
                 then,
                 els,
             } => todo!(),
+            Stmt::WhileStmt { condition, body } => todo!(),
         }
     }
 }
