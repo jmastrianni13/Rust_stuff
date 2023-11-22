@@ -4,6 +4,7 @@ mod interpreter;
 mod parser;
 mod scanner;
 mod stmt;
+mod tests;
 
 use std::env;
 use std::fs;
@@ -35,7 +36,7 @@ fn main() {
     }
 }
 
-fn run_file(path: &str) -> Result<(), String> {
+pub fn run_file(path: &str) -> Result<(), String> {
     let mut interp = interpreter::Interpreter::new();
     match fs::read_to_string(path) {
         Err(msg) => return Err(msg.to_string()),
