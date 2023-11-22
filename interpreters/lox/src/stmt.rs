@@ -25,6 +25,15 @@ pub enum Stmt {
         condition: expr::Expr,
         body: Box<Stmt>,
     },
+//    ForStmt {
+//        var_decl: Option<Box<Stmt>>,
+//        expr_stmt: Option<Box<Stmt>>,
+//
+//        condition: Option<expr::Expr>,
+//        incrementer: Option<expr::Expr>,
+//
+//        body: Box<Stmt>,
+//    },
 }
 
 impl Stmt {
