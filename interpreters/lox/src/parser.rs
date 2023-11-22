@@ -162,7 +162,6 @@ impl Parser {
         let exp = self.or()?;
 
         if self.match_token(scanner::TokenType::Equal) {
-            let equals = self.previous();
             let value = self.assignment()?;
 
             match exp {
@@ -427,7 +426,7 @@ mod tests {
         let one = scanner::Token {
             token_type: scanner::TokenType::NumberLit,
             lexeme: "1".to_string(),
-            literal: Some(LiteralValue::IntValue(1)),
+            literal: Some(LiteralValue::FValue(1.0)),
             line_number: 0,
         };
 
@@ -441,7 +440,7 @@ mod tests {
         let two = scanner::Token {
             token_type: scanner::TokenType::NumberLit,
             lexeme: "2".to_string(),
-            literal: Some(LiteralValue::IntValue(2)),
+            literal: Some(LiteralValue::FValue(2.0)),
             line_number: 0,
         };
 

@@ -294,20 +294,6 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(
-        token_type: TokenType,
-        lexeme: String,
-        literal: Option<LiteralValue>,
-        line_number: usize,
-    ) -> Self {
-        Self {
-            token_type,
-            lexeme,
-            literal,
-            line_number,
-        }
-    }
-
     pub fn to_string(self: &Self) -> String {
         format!("{} {} {:?}", self.token_type, self.lexeme, self.literal)
     }
@@ -315,10 +301,8 @@ impl Token {
 
 #[derive(Debug, Clone)]
 pub enum LiteralValue {
-    IntValue(i64),
     FValue(f64),
     StringValue(String),
-    IdentifierVal(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]
