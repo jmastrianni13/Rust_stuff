@@ -394,6 +394,12 @@ impl Parser {
             loop {
                 let arg = self.expression()?;
                 arguments.push(arg);
+                if arguments.len() >= 255 {
+                    let location = self.peek().line_number;
+                    return Err(format!(
+                        "line {location}: cannot have more 255 or more arguments"
+                    ));
+                }
 
                 if !self.match_token(scanner::TokenType::Comma) {
                     break;
