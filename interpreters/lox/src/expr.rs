@@ -125,6 +125,11 @@ pub enum Expr {
         operator: scanner::Token,
         right: Box<Expr>,
     },
+    Call {
+        callee: Box<Expr>,
+        paren: scanner::Token,
+        arguments: Vec<Expr>,
+    },
     Grouping {
         expression: Box<Expr>,
     },
@@ -160,6 +165,11 @@ impl Expr {
                 left.to_string(),
                 right.to_string()
             ),
+            Expr::Call {
+                callee,
+                paren: _paren,
+                arguments,
+            } => format!("({} {:?})", (*callee).to_string(), arguments),
             Expr::Grouping { expression } => format!("(group {})", (*expression).to_string()),
             Expr::Literal { value } => format!("{}", value.to_string()),
             Expr::Logical {
@@ -199,6 +209,7 @@ impl Expr {
                 Some(value) => Ok(value.clone()),
                 None => Err(format!("variable '{}' has not been declared", name.lexeme)),
             },
+            Expr::Call { callee, paren, arguments } => todo!(),
             Expr::Literal { value } => Ok((*value).clone()),
             Expr::Logical {
                 left,
