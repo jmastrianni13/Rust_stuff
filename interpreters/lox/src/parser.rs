@@ -369,8 +369,48 @@ impl Parser {
                 right: Box::from(rhs),
             });
         } else {
-            return self.primary();
+            return self.call();
         }
+    }
+
+    fn call(&mut self) -> Result<expr::Expr, String> {
+        let mut exp = self.primary()?;
+
+        loop {
+            if self.match_token(scanner::TokenType::LeftParen) {
+                exp = self.finish_call(exp)?;
+            } else {
+                break;
+            }
+        }
+
+        return Ok(exp);
+    }
+
+    fn finish_call(&mut self, callee: expr::Expr) -> Result<expr::Expr, String> {
+        let mut arguments = vec![];
+
+        if !self.check(scanner::TokenType::RightParen) {
+            loop {
+                let arg = self.expression()?;
+                arguments.push(arg);
+
+                if !self.match_token(scanner::TokenType::Comma) {
+                    break;
+                }
+            }
+        }
+
+        let paren = self.consume(
+            scanner::TokenType::RightParen,
+            "expected a ')' after arguments.",
+        )?;
+
+        return Ok(expr::Expr::Call {
+            callee: Box::new(callee),
+            paren,
+            arguments,
+        });
     }
 
     fn primary(&mut self) -> Result<expr::Expr, String> {
