@@ -24,6 +24,41 @@ pub enum LiteralValue {
     True,
     False,
     Nil,
+    Callable {
+        name: String,
+        arity: usize,
+        fun: Rc<dyn Fn(&Vec<LiteralValue>) -> LiteralValue>,
+    },
+}
+
+impl std::fmt::Debug for LiteralValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl PartialEq for LiteralValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (LiteralValue::Number(x), LiteralValue::Number(y)) => x == y,
+            (LiteralValue::StringLit(s1), LiteralValue::StringLit(s2)) => s1 == s2,
+            (LiteralValue::True, LiteralValue::True) => true,
+            (LiteralValue::False, LiteralValue::False) => true,
+            (
+                LiteralValue::Callable {
+                    name: name_1,
+                    arity: arity_1,
+                    fun: _,
+                },
+                LiteralValue::Callable {
+                    name: name_2,
+                    arity: arity_2,
+                    fun: _,
+                },
+            ) => name_1 == name_2 && arity_1 == arity_2,
+            _ => false,
+        }
+    }
 }
 
 impl LiteralValue {
@@ -34,6 +69,11 @@ impl LiteralValue {
             LiteralValue::True => "true".to_string(),
             LiteralValue::False => "false".to_string(),
             LiteralValue::Nil => "nil".to_string(),
+            LiteralValue::Callable {
+                name,
+                arity,
+                fun: _,
+            } => format!("{name}/{arity}"),
         }
     }
 
@@ -88,6 +128,13 @@ impl LiteralValue {
             LiteralValue::True => LiteralValue::False,
             LiteralValue::False => LiteralValue::True,
             LiteralValue::Nil => LiteralValue::True,
+            LiteralValue::Callable {
+                name: _,
+                arity: _,
+                fun: _,
+            } => {
+                panic!("cannot use callable as a falsy value")
+            }
         }
     }
 
@@ -110,6 +157,13 @@ impl LiteralValue {
             LiteralValue::True => LiteralValue::True,
             LiteralValue::False => LiteralValue::False,
             LiteralValue::Nil => LiteralValue::False,
+            LiteralValue::Callable {
+                name: _,
+                arity: _,
+                fun: _,
+            } => {
+                panic!("cannot use callable as a truthy value")
+            }
         }
     }
 }
@@ -209,7 +263,32 @@ impl Expr {
                 Some(value) => Ok(value.clone()),
                 None => Err(format!("variable '{}' has not been declared", name.lexeme)),
             },
-            Expr::Call { callee, paren, arguments } => todo!(),
+            Expr::Call {
+                callee,
+                paren: _,
+                arguments,
+            } => {
+                let callable = (*callee).evaluate(env.clone())?;
+                match callable {
+                    LiteralValue::Callable { name, arity, fun } => {
+                        if arguments.len() != arity {
+                            return Err(format!(
+                                "callable {} expected {} arguments but got {}",
+                                name,
+                                arity,
+                                arguments.len()
+                            ));
+                        }
+                        let mut arg_vals = vec![];
+                        for arg in arguments {
+                            let val = arg.evaluate(env.clone())?;
+                            arg_vals.push(val);
+                        }
+                        return Ok(fun(&arg_vals));
+                    }
+                    other => Err(format!("{} is not a callable", other.to_type())),
+                }
+            }
             Expr::Literal { value } => Ok((*value).clone()),
             Expr::Logical {
                 left,
