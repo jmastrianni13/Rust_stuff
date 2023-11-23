@@ -3,10 +3,10 @@ use crate::scanner;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-fn unwrap_as_f32(literal: Option<scanner::LiteralValue>) -> f32 {
+fn unwrap_as_f64(literal: Option<scanner::LiteralValue>) -> f64 {
     match literal {
-        Some(scanner::LiteralValue::FValue(x)) => x as f32,
-        _ => panic!("cloud not unwrap as f32"),
+        Some(scanner::LiteralValue::FValue(x)) => x as f64,
+        _ => panic!("cloud not unwrap as f64"),
     }
 }
 
@@ -17,9 +17,9 @@ fn unwrap_as_string(literal: Option<scanner::LiteralValue>) -> String {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone)]
 pub enum LiteralValue {
-    Number(f32),
+    Number(f64),
     StringLit(String),
     True,
     False,
@@ -84,12 +84,17 @@ impl LiteralValue {
             LiteralValue::True => "Boolean",
             LiteralValue::False => "Boolean",
             LiteralValue::Nil => "Nil",
+            LiteralValue::Callable {
+                name: _,
+                arity: _,
+                fun: _,
+            } => "Callable",
         }
     }
 
     pub fn from_token(token: scanner::Token) -> Self {
         match token.token_type {
-            scanner::TokenType::NumberLit => Self::Number(unwrap_as_f32(token.literal)),
+            scanner::TokenType::NumberLit => Self::Number(unwrap_as_f64(token.literal)),
             scanner::TokenType::StringLit => Self::StringLit(unwrap_as_string(token.literal)),
             scanner::TokenType::False => Self::False,
             scanner::TokenType::True => Self::True,
@@ -112,7 +117,7 @@ impl LiteralValue {
     pub fn is_falsy(&self) -> LiteralValue {
         match self {
             LiteralValue::Number(x) => {
-                if *x == 0.0 as f32 {
+                if *x == 0.0 as f64 {
                     LiteralValue::True
                 } else {
                     LiteralValue::False
@@ -141,7 +146,7 @@ impl LiteralValue {
     pub fn is_truthy(&self) -> LiteralValue {
         match self {
             LiteralValue::Number(x) => {
-                if *x == 0.0 as f32 {
+                if *x == 0.0 as f64 {
                     LiteralValue::False
                 } else {
                     LiteralValue::True
@@ -168,7 +173,12 @@ impl LiteralValue {
     }
 }
 
-#[derive(Debug)]
+impl std::fmt::Debug for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
 pub enum Expr {
     Assign {
         name: scanner::Token,
