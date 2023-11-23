@@ -4,14 +4,32 @@ use crate::stmt;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+        .expect("could not get system time")
+        .as_millis();
+
+    return expr::LiteralValue::Number(now as f64 / 1000.0);
+}
+
 pub struct Interpreter {
     environment: Rc<RefCell<environment::Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
+        let mut globals = environment::Environment::new();
+        globals.define(
+            String::from("clock"),
+            expr::LiteralValue::Callable {
+                name: "clock".to_string(),
+                arity: 0,
+                fun: Rc::new(clock_impl),
+            },
+        );
         return Self {
-            environment: Rc::new(RefCell::new(environment::Environment::new())),
+            environment: Rc::new(RefCell::new(globals)),
         };
     }
 
