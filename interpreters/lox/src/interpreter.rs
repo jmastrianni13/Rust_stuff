@@ -114,21 +114,13 @@ impl Interpreter {
                                 .define(params[i].lexeme.clone(), (*arg).clone());
                         }
 
-                        for i in 0..(body.len() - 1) {
+                        for i in 0..(body.len()) {
                             clos_int
                                 .interpret(vec![body[i].as_ref()])
                                 .expect(&format!("evaluating failed inside {}", name_clone));
                         }
 
-                        let value;
-                        match body[body.len() - 1].as_ref() {
-                            stmt::Stmt::Expression { expression } => {
-                                value = expression.evaluate(clos_int.environment.clone()).unwrap();
-                            }
-                            _ => todo!(),
-                        }
-
-                        return value;
+                        return expr::LiteralValue::Nil;
                     };
 
                     let callable = expr::LiteralValue::Callable {
