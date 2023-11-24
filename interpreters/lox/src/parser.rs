@@ -3,6 +3,11 @@ use crate::scanner;
 use crate::stmt;
 
 #[derive(Debug)]
+enum FunctionKind {
+    Function,
+}
+
+#[derive(Debug)]
 pub struct Parser {
     tokens: Vec<scanner::Token>,
     current: usize,
@@ -40,17 +45,61 @@ impl Parser {
 
     fn declaration(&mut self) -> Result<stmt::Stmt, String> {
         if self.match_token(scanner::TokenType::Var) {
-            match self.var_declaration() {
-                Ok(statement) => {
-                    return Ok(statement);
-                }
-                Err(msg) => {
-                    return Err(msg);
-                }
-            }
+            return self.var_declaration();
+        } else if self.match_token(scanner::TokenType::Fun) {
+            self.function(FunctionKind::Function)
         } else {
             return self.statement();
         }
+    }
+
+    fn function(&mut self, kind: FunctionKind) -> Result<stmt::Stmt, String> {
+        let name = self.consume(
+            scanner::TokenType::Identifier,
+            &format!("expected {kind:?} name"),
+        )?;
+
+        self.consume(
+            scanner::TokenType::LeftParen,
+            &format!("expected '(' after {kind:?} name"),
+        )?;
+
+        let mut params = vec![];
+        if !self.check(scanner::TokenType::RightParen) {
+            loop {
+                if params.len() >= 255 {
+                    let location = self.peek().line_number;
+                    return Err(format!(
+                        "line {location}: cannot have more 255 or more arguments"
+                    ));
+                }
+
+                let param =
+                    self.consume(scanner::TokenType::Identifier, "expected parameter name")?;
+                params.push(param);
+
+                if !self.match_token(scanner::TokenType::Comma) {
+                    break;
+                }
+            }
+        }
+
+        self.consume(
+            scanner::TokenType::RightParen,
+            "expected ')' after parameters",
+        )?;
+
+        self.consume(
+            scanner::TokenType::LeftBrace,
+            &format!("expected '{{' before {kind:?} body"),
+        )?;
+
+        let body = match self.block_statement()? {
+            stmt::Stmt::Block { statements } => statements,
+            _ => panic!("block statement parsed something that was not a block"),
+        };
+
+        return Ok(stmt::Stmt::Function { name, params, body });
     }
 
     fn var_declaration(&mut self) -> Result<stmt::Stmt, String> {
