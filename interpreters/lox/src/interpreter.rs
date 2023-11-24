@@ -1,10 +1,14 @@
 use crate::environment;
 use crate::expr;
+use crate::scanner;
 use crate::stmt;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
+fn clock_impl(
+    _env: Rc<RefCell<environment::Environment>>,
+    _args: &Vec<expr::LiteralValue>,
+) -> expr::LiteralValue {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::SystemTime::UNIX_EPOCH)
         .expect("could not get system time")
@@ -31,6 +35,13 @@ impl Interpreter {
         return Self {
             environment: Rc::new(RefCell::new(globals)),
         };
+    }
+
+    fn for_closure(parent: Rc<RefCell<environment::Environment>>) -> Self {
+        let environment = Rc::new(RefCell::new(environment::Environment::new()));
+        environment.borrow_mut().enclosing = Some(parent);
+
+        return Self { environment };
     }
 
     pub fn interpret(&mut self, stmts: Vec<&stmt::Stmt>) -> Result<(), String> {
@@ -83,6 +94,52 @@ impl Interpreter {
                         self.interpret(statements)?;
                         flag = condition.evaluate(self.environment.clone())?;
                     }
+                }
+                stmt::Stmt::Function { name, params, body } => {
+                    let arity = params.len();
+
+                    let params: Vec<scanner::Token> = params.iter().map(|t| (*t).clone()).collect();
+
+                    let body: Vec<Box<stmt::Stmt>> = body.iter().map(|b| (*b).clone()).collect();
+
+                    let name_clone = name.lexeme.clone();
+
+                    let fun_impl = move |parent_env, args: &Vec<expr::LiteralValue>| {
+                        let mut clos_int = Interpreter::for_closure(parent_env);
+
+                        for (i, arg) in args.iter().enumerate() {
+                            clos_int
+                                .environment
+                                .borrow_mut()
+                                .define(params[i].lexeme.clone(), (*arg).clone());
+                        }
+
+                        for i in 0..(body.len() - 1) {
+                            clos_int
+                                .interpret(vec![body[i].as_ref()])
+                                .expect(&format!("evaluating failed inside {}", name_clone));
+                        }
+
+                        let value;
+                        match body[body.len() - 1].as_ref() {
+                            stmt::Stmt::Expression { expression } => {
+                                value = expression.evaluate(clos_int.environment.clone()).unwrap();
+                            }
+                            _ => todo!(),
+                        }
+
+                        return value;
+                    };
+
+                    let callable = expr::LiteralValue::Callable {
+                        name: name.lexeme.clone(),
+                        arity,
+                        fun: Rc::new(fun_impl),
+                    };
+
+                    self.environment
+                        .borrow_mut()
+                        .define(name.lexeme.clone(), callable);
                 }
             };
         }
