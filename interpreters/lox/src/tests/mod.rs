@@ -88,4 +88,38 @@ mod tests {
             assert_eq!(lines[i], fibo[i].to_string());
         }
     }
+
+    #[test]
+    fn interpret_fundef() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("./src/tests/cases/fundef.jlox")
+            .output()
+            .unwrap();
+        let lines = std::str::from_utf8(output.stdout.as_slice())
+            .unwrap()
+            .split("\n")
+            .collect::<Vec<&str>>();
+
+        assert_eq!(lines.len(), 4, "Output: '{}'", lines.join("\n"));
+        assert_eq!(lines[0], "1");
+        assert_eq!(lines[1], "2");
+        assert_eq!(lines[2], "3");
+    }
+
+    #[test]
+    fn interpret_fun_mods_local_env() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("./src/tests/cases/fun_mods_local_env.jlox")
+            .output()
+            .unwrap();
+        let lines = std::str::from_utf8(output.stdout.as_slice())
+            .unwrap()
+            .split("\n")
+            .collect::<Vec<&str>>();
+
+        assert_eq!(lines.len(), 2, "Output: '{}'", lines.join("\n"));
+        assert_eq!(lines[0], "3");
+    }
 }
