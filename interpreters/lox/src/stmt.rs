@@ -1,7 +1,7 @@
 use crate::expr;
 use crate::scanner;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Expression {
         expression: expr::Expr,
@@ -25,15 +25,11 @@ pub enum Stmt {
         condition: expr::Expr,
         body: Box<Stmt>,
     },
-//    ForStmt {
-//        var_decl: Option<Box<Stmt>>,
-//        expr_stmt: Option<Box<Stmt>>,
-//
-//        condition: Option<expr::Expr>,
-//        incrementer: Option<expr::Expr>,
-//
-//        body: Box<Stmt>,
-//    },
+    Function {
+        name: scanner::Token,
+        params: Vec<scanner::Token>,
+        body: Vec<Box<Stmt>>,
+    },
 }
 
 impl Stmt {
@@ -60,6 +56,11 @@ impl Stmt {
             } => todo!(),
             Stmt::WhileStmt {
                 condition: _,
+                body: _,
+            } => todo!(),
+            Stmt::Function {
+                name: _,
+                params: _,
                 body: _,
             } => todo!(),
         }
