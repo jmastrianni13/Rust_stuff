@@ -156,4 +156,23 @@ mod tests {
         assert_eq!(lines[1], "2");
         assert_eq!(lines[2], "nil");
     }
+
+    #[test]
+    fn interpret_funcondreturn() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("./src/tests/cases/funcondreturn.jlox")
+            .output()
+            .unwrap();
+        let lines = std::str::from_utf8(output.stdout.as_slice())
+            .unwrap()
+            .split("\n")
+            .collect::<Vec<&str>>();
+
+        assert_eq!(lines.len(), 5, "Output: '{}'", lines.join("\n"));
+        assert_eq!(lines[0], "3");
+        assert_eq!(lines[1], "2");
+        assert_eq!(lines[2], "1");
+        assert_eq!(lines[3], "0");
+    }
 }

@@ -118,15 +118,8 @@ impl Interpreter {
                             clos_int
                                 .interpret(vec![body[i].as_ref()])
                                 .expect(&format!("evaluating failed inside {}", name_clone));
-                            if let stmt::Stmt::ReturnStmt {
-                                keyword: _,
-                                value: _,
-                            } = *body[i]
-                            {
-                                let value: expr::LiteralValue = clos_int
-                                    .environment
-                                    .borrow()
-                                    .get("return").expect("return value was not defined in the environment even though return statement was interpreted");
+
+                            if let Some(value) = clos_int.environment.borrow().get("return") {
                                 return value;
                             }
                         }
