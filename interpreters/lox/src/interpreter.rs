@@ -18,6 +18,7 @@ fn clock_impl(
 }
 
 pub struct Interpreter {
+    globals: Rc<RefCell<environment::Environment>>,
     environment: Rc<RefCell<environment::Environment>>,
 }
 
@@ -25,7 +26,7 @@ impl Interpreter {
     pub fn new() -> Self {
         let mut globals = environment::Environment::new();
         globals.define(
-            String::from("clock"),
+            "clock".to_string(),
             expr::LiteralValue::Callable {
                 name: "clock".to_string(),
                 arity: 0,
@@ -33,6 +34,7 @@ impl Interpreter {
             },
         );
         return Self {
+            globals: Rc::new(RefCell::new(environment::Environment::new())),
             environment: Rc::new(RefCell::new(globals)),
         };
     }
@@ -41,7 +43,10 @@ impl Interpreter {
         let environment = Rc::new(RefCell::new(environment::Environment::new()));
         environment.borrow_mut().enclosing = Some(parent);
 
-        return Self { environment };
+        return Self {
+            globals: Rc::new(RefCell::new(environment::Environment::new())),
+            environment,
+        };
     }
 
     pub fn interpret(&mut self, stmts: Vec<&stmt::Stmt>) -> Result<(), String> {
@@ -119,7 +124,8 @@ impl Interpreter {
                                 .interpret(vec![body[i].as_ref()])
                                 .expect(&format!("evaluating failed inside {}", name_clone));
 
-                            if let Some(value) = clos_int.environment.borrow().get("return") {
+                            if let Some(value) = clos_int.globals.borrow().get("return") {
+                                // clos_int.environment.borrow_mut().delete("return");
                                 return value;
                             }
                         }
@@ -144,9 +150,9 @@ impl Interpreter {
                     } else {
                         eval_val = expr::LiteralValue::Nil;
                     }
-                    self.environment
+                    self.globals
                         .borrow_mut()
-                        .define("return".to_string(), eval_val);
+                        .define_top_level("return".to_string(), eval_val);
                 }
             };
         }
