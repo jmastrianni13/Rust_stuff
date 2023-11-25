@@ -30,6 +30,10 @@ pub enum Stmt {
         params: Vec<scanner::Token>,
         body: Vec<Box<Stmt>>,
     },
+    ReturnStmt {
+        keyword: scanner::Token,
+        value: Option<expr::Expr>,
+    },
 }
 
 impl Stmt {
@@ -62,6 +66,10 @@ impl Stmt {
                 name: _,
                 params: _,
                 body: _,
+            } => todo!(),
+            Stmt::ReturnStmt {
+                keyword: _,
+                value: _,
             } => todo!(),
         }
     }
