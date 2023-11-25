@@ -122,4 +122,38 @@ mod tests {
         assert_eq!(lines.len(), 2, "Output: '{}'", lines.join("\n"));
         assert_eq!(lines[0], "3");
     }
+
+    #[test]
+    fn interpret_funreturn() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("./src/tests/cases/funreturn.jlox")
+            .output()
+            .unwrap();
+        let lines = std::str::from_utf8(output.stdout.as_slice())
+            .unwrap()
+            .split("\n")
+            .collect::<Vec<&str>>();
+
+        assert_eq!(lines.len(), 2, "Output: '{}'", lines.join("\n"));
+        assert_eq!(lines[0], "5");
+    }
+
+    #[test]
+    fn interpret_funreturnnil() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("./src/tests/cases/funreturnnil.jlox")
+            .output()
+            .unwrap();
+        let lines = std::str::from_utf8(output.stdout.as_slice())
+            .unwrap()
+            .split("\n")
+            .collect::<Vec<&str>>();
+
+        assert_eq!(lines.len(), 4, "Output: '{}'", lines.join("\n"));
+        assert_eq!(lines[0], "1");
+        assert_eq!(lines[1], "2");
+        assert_eq!(lines[2], "nil");
+    }
 }
