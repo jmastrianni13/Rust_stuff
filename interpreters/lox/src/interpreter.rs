@@ -18,14 +18,14 @@ fn clock_impl(
 }
 
 pub struct Interpreter {
-    globals: Rc<RefCell<environment::Environment>>,
+    specials: Rc<RefCell<environment::Environment>>,
     environment: Rc<RefCell<environment::Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
-        let mut globals = environment::Environment::new();
-        globals.define(
+        let mut env = environment::Environment::new();
+        env.define(
             "clock".to_string(),
             expr::LiteralValue::Callable {
                 name: "clock".to_string(),
@@ -34,8 +34,8 @@ impl Interpreter {
             },
         );
         return Self {
-            globals: Rc::new(RefCell::new(environment::Environment::new())),
-            environment: Rc::new(RefCell::new(globals)),
+            specials: Rc::new(RefCell::new(environment::Environment::new())),
+            environment: Rc::new(RefCell::new(env)),
         };
     }
 
@@ -44,7 +44,7 @@ impl Interpreter {
         environment.borrow_mut().enclosing = Some(parent);
 
         return Self {
-            globals: Rc::new(RefCell::new(environment::Environment::new())),
+            specials: Rc::new(RefCell::new(environment::Environment::new())),
             environment,
         };
     }
@@ -124,8 +124,7 @@ impl Interpreter {
                                 .interpret(vec![body[i].as_ref()])
                                 .expect(&format!("evaluating failed inside {}", name_clone));
 
-                            if let Some(value) = clos_int.globals.borrow().get("return") {
-                                // clos_int.environment.borrow_mut().delete("return");
+                            if let Some(value) = clos_int.specials.borrow().get("return") {
                                 return value;
                             }
                         }
@@ -150,7 +149,7 @@ impl Interpreter {
                     } else {
                         eval_val = expr::LiteralValue::Nil;
                     }
-                    self.globals
+                    self.specials
                         .borrow_mut()
                         .define_top_level("return".to_string(), eval_val);
                 }
