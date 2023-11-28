@@ -211,4 +211,38 @@ mod tests {
         assert_eq!(lines[2], "1");
         assert_eq!(lines[3], "2");
     }
+
+    #[test]
+    fn interpret_funanon() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("./src/tests/cases/funanon.jlox")
+            .output()
+            .unwrap();
+        let lines = std::str::from_utf8(output.stdout.as_slice())
+            .unwrap()
+            .split("\n")
+            .collect::<Vec<&str>>();
+
+        assert_eq!(lines.len(), 4, "Output: '{}'", lines.join("\n"));
+        assert_eq!(lines[0], "1");
+        assert_eq!(lines[1], "2");
+        assert_eq!(lines[2], "3");
+    }
+
+    #[test]
+    fn interpret_funanon2() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("./src/tests/cases/funanon2.jlox")
+            .output()
+            .unwrap();
+        let lines = std::str::from_utf8(output.stdout.as_slice())
+            .unwrap()
+            .split("\n")
+            .collect::<Vec<&str>>();
+
+        assert_eq!(lines.len(), 2, "Output: '{}'", lines.join("\n"));
+        assert_eq!(lines[0], "1");
+    }
 }
