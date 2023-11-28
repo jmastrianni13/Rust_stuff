@@ -304,11 +304,58 @@ impl Parser {
         return self.assignment();
     }
 
+    fn function_expression(&mut self) -> Result<expr::Expr, String> {
+        let paren = self.consume(
+            scanner::TokenType::LeftParen,
+            "expected '(' after anonymous function",
+        )?;
+
+        let mut parameters = vec![];
+        if !self.check(scanner::TokenType::RightParen) {
+            loop {
+                if parameters.len() >= 255 {
+                    let location = self.peek().line_number;
+                    return Err(format!(
+                        "line {location}: cannot have more 255 or more arguments"
+                    ));
+                }
+
+                let param =
+                    self.consume(scanner::TokenType::Identifier, "expected parameter name")?;
+                parameters.push(param);
+
+                if !self.match_token(scanner::TokenType::Comma) {
+                    break;
+                }
+            }
+        }
+        self.consume(
+            scanner::TokenType::RightParen,
+            "expected ')' after anonymous function parameters",
+        )?;
+
+        self.consume(
+            scanner::TokenType::LeftBrace,
+            "expect '{' after anonymous function declaration",
+        )?;
+
+        let body = match self.block_statement()? {
+            stmt::Stmt::Block { statements } => statements,
+            _ => panic!("Block statement parsed something that was not a block"),
+        };
+
+        return Ok(expr::Expr::AnonFunction {
+            paren,
+            arguments: parameters,
+            body,
+        });
+    }
+
     fn assignment(&mut self) -> Result<expr::Expr, String> {
         let exp = self.or()?;
 
         if self.match_token(scanner::TokenType::Equal) {
-            let value = self.assignment()?;
+            let value = self.expression()?;
 
             match exp {
                 expr::Expr::Variable { name } => {
@@ -514,6 +561,10 @@ impl Parser {
                 result = expr::Expr::Variable {
                     name: self.previous(),
                 };
+            }
+            scanner::TokenType::Fun => {
+                self.advance();
+                result = self.function_expression()?;
             }
             _ => return Err("expected expression".to_string()),
         }

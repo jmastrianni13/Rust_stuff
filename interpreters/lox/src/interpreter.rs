@@ -15,8 +15,8 @@ fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
 }
 
 pub struct Interpreter {
-    specials: Rc<RefCell<environment::Environment>>,
-    environment: Rc<RefCell<environment::Environment>>,
+    pub specials: Rc<RefCell<environment::Environment>>,
+    pub environment: Rc<RefCell<environment::Environment>>,
 }
 
 impl Interpreter {
@@ -43,6 +43,15 @@ impl Interpreter {
         return Self {
             specials: Rc::new(RefCell::new(environment::Environment::new())),
             environment,
+        };
+    }
+
+    pub fn for_anon(parent: Rc<RefCell<environment::Environment>>) -> Self {
+        let mut env = environment::Environment::new();
+        env.enclosing = Some(parent);
+        return Self {
+            specials: Rc::new(RefCell::new(environment::Environment::new())),
+            environment: Rc::new(RefCell::new(env)),
         };
     }
 
