@@ -27,7 +27,7 @@ pub enum LiteralValue {
     Callable {
         name: String,
         arity: usize,
-        fun: Rc<dyn Fn(Rc<RefCell<environment::Environment>>, &Vec<LiteralValue>) -> LiteralValue>,
+        fun: Rc<dyn Fn(&Vec<LiteralValue>) -> LiteralValue>,
     },
 }
 
@@ -295,7 +295,7 @@ impl Expr {
                             let val = arg.evaluate(env.clone())?;
                             arg_vals.push(val);
                         }
-                        return Ok(fun(env.clone(), &arg_vals));
+                        return Ok(fun(&arg_vals));
                     }
                     other => Err(format!("{} is not a callable", other.to_type())),
                 }

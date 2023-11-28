@@ -5,10 +5,7 @@ use crate::stmt;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-fn clock_impl(
-    _env: Rc<RefCell<environment::Environment>>,
-    _args: &Vec<expr::LiteralValue>,
-) -> expr::LiteralValue {
+fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::SystemTime::UNIX_EPOCH)
         .expect("could not get system time")
@@ -109,8 +106,9 @@ impl Interpreter {
 
                     let name_clone = name.lexeme.clone();
 
-                    let fun_impl = move |parent_env, args: &Vec<expr::LiteralValue>| {
-                        let mut clos_int = Interpreter::for_closure(parent_env);
+                    let parent_env = self.environment.clone();
+                    let fun_impl = move |args: &Vec<expr::LiteralValue>| {
+                        let mut clos_int = Interpreter::for_closure(parent_env.clone());
 
                         for (i, arg) in args.iter().enumerate() {
                             clos_int
