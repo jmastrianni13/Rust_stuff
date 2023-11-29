@@ -10,8 +10,8 @@ pub struct Resolver {
     scopes: Vec<HashMap<String, bool>>,
 }
 
-#[allow(dead_code)]
 impl Resolver {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         return Self {
             interp: interpreter::Interpreter::new(),
@@ -19,6 +19,7 @@ impl Resolver {
         };
     }
 
+    #[allow(dead_code)]
     pub fn resolve(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
         match stm {
             stmt::Stmt::Block { statements: _ } => self.resolve_block(stm)?,
@@ -26,6 +27,7 @@ impl Resolver {
                 name: _,
                 initializer: _,
             } => self.resolve_var(stm)?,
+            stmt::Stmt::Function { name, params, body } => self.resolve_function(stm)?,
             _ => todo!(),
         }
         todo!();
@@ -59,6 +61,33 @@ impl Resolver {
             panic!("incorrect type in resolve var");
         }
         return Ok(());
+    }
+
+    fn resolve_function(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
+        if let stmt::Stmt::Function { name, params, body } = stm {
+            self.declare(name);
+            self.define(name);
+
+            return self.resolve_function_helper(stm);
+        } else {
+            panic!("incorrect type in resolve function");
+        }
+    }
+
+    fn resolve_function_helper(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
+        if let stmt::Stmt::Function { name, params, body } = stm {
+            self.begin_scope();
+            for param in params {
+                self.declare(param);
+                self.define(param);
+            }
+            self.resolve_many(body);
+            self.end_scope();
+
+            return Ok(());
+        } else {
+            panic!("incorrect type in resolve function helper");
+        }
     }
 
     fn begin_scope(&mut self) {
