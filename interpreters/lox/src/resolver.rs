@@ -43,6 +43,10 @@ impl Resolver {
                 keyword: _,
                 value: Some(value),
             } => self.resolve_expr(value)?,
+            stmt::Stmt::WhileStmt { condition, body } => {
+                self.resolve_expr(condition)?;
+                self.resolve(body.as_ref())?;
+            }
             _ => todo!(),
         }
         todo!();
