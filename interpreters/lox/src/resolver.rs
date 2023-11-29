@@ -28,6 +28,21 @@ impl Resolver {
                 initializer: _,
             } => self.resolve_var(stm)?,
             stmt::Stmt::Function { name, params, body } => self.resolve_function(stm)?,
+            stmt::Stmt::Expression { expression } => self.resolve_expr(expression)?,
+            stmt::Stmt::IfStmt {
+                predicate,
+                then,
+                els,
+            } => self.resolve_if_stmt(stm)?,
+            stmt::Stmt::Print { expression } => self.resolve_expr(expression)?,
+            stmt::Stmt::ReturnStmt {
+                keyword: _,
+                value: None,
+            } => (),
+            stmt::Stmt::ReturnStmt {
+                keyword: _,
+                value: Some(value),
+            } => self.resolve_expr(value)?,
             _ => todo!(),
         }
         todo!();
@@ -87,6 +102,25 @@ impl Resolver {
             return Ok(());
         } else {
             panic!("incorrect type in resolve function helper");
+        }
+    }
+
+    fn resolve_if_stmt(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
+        if let stmt::Stmt::IfStmt {
+            predicate,
+            then,
+            els,
+        } = stm
+        {
+            self.resolve_expr(predicate)?;
+            self.resolve(then.as_ref())?;
+            if let Some(els) = els {
+                self.resolve(els.as_ref())?;
+            }
+
+            return Ok(());
+        } else {
+            panic!("incorrect type in resolve if statement");
         }
     }
 
