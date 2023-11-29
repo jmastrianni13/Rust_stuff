@@ -90,6 +90,7 @@ impl Resolver {
     fn resolve_expr(&mut self, exp: &expr::Expr) -> Result<(), String> {
         match exp {
             expr::Expr::Variable { name: _ } => self.resolve_expr_var(exp),
+            expr::Expr::Assign { name: _, value: _ } => todo!(),
             _ => todo!(),
         }
     }
@@ -101,13 +102,32 @@ impl Resolver {
                 return Err("cannot read local varaible in its own initializer".to_string());
             }
 
-            return self.resolve_local(exp);
+            return self.resolve_local(exp, name);
         } else {
             panic!("incorrect type in resolve_expr_var");
         }
     }
 
-    fn resolve_local(&mut self, _exp: &expr::Expr) -> Result<(), String> {
-        todo!();
+    fn resolve_local(&mut self, exp: &expr::Expr, name: &scanner::Token) -> Result<(), String> {
+        let size = self.scopes.len();
+        for i in (0..=(size - 1)).rev() {
+            let scope = self.scopes[i];
+            if scope.contains_key(&name.lexeme) {
+                self.interp.resolve(exp, size - 1 - i)?;
+                return Ok(());
+            }
+        }
+        return Ok(()); // assume it's global
+    }
+
+    fn resolve_expr_assign(&mut self, exp: &expr::Expr) -> Result<(), String> {
+        if let expr::Expr::Assign { name, value } = exp {
+            self.resolve_expr(value.as_ref())?;
+            self.resolve_local(exp, name)?;
+        } else {
+            panic!("incorrect type in resolve assign");
+        }
+
+        return Ok(());
     }
 }
