@@ -1,248 +1,92 @@
 #[cfg(test)]
 mod tests {
+    use std::fs::{read_dir, read_to_string, DirEntry};
     use std::process::Command;
-    #[test]
-    fn interpret_block() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/block.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 3);
-        assert_eq!(lines[0], "3");
-        assert_eq!(lines[1], "3");
-    }
 
     #[test]
-    fn interpret_while() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/while.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
+    fn execute_tests() {
+        // let cases = read_dir("./src/tests/cases").unwrap();
+        let cases = read_dir("/Users/joemastrianni/Desktop/Sandbox/Rust/hello_rust/Rust_stuff/interpreters/lox/src/tests/cases").unwrap();
 
-        assert_eq!(lines.len(), 3);
-        assert_eq!(lines[0], "1");
-        assert_eq!(lines[1], "0");
-    }
-
-    #[test]
-    fn interpret_while_math() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/while_math.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 11);
-        assert_eq!(lines[0], "10");
-        assert_eq!(lines[1], "90");
-        assert_eq!(lines[2], "720");
-        assert_eq!(lines[3], "5040");
-        assert_eq!(lines[4], "30240");
-        assert_eq!(lines[5], "151200");
-        assert_eq!(lines[6], "604800");
-        assert_eq!(lines[7], "1814400");
-        assert_eq!(lines[8], "3628800");
-        assert_eq!(lines[9], "3628800");
-    }
-
-    #[test]
-    fn interpret_forloop() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/forloop.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        let mut fibo = vec![];
-        let mut a = 0;
-        let mut b = 1;
-        let mut temp;
-        for _ in 0..21 {
-            fibo.push(a);
-            temp = b;
-            b = a + b;
-            a = temp;
+        let mut errors = vec![];
+        for case in cases {
+            let case = case.unwrap();
+            let name = case.path().display().to_string();
+            if name.contains(".swp") {
+                continue;
+            }
+            match run_test(case) {
+                Ok(_) => (),
+                Err(msg) => errors.push(msg),
+            }
         }
 
-        assert_eq!(lines.len(), fibo.len() + 1);
-        for i in 0..fibo.len() {
-            assert_eq!(lines[i], fibo[i].to_string());
+        if errors.len() > 0 {
+            panic!("Errors:\n\n{}", errors.join("\n\n"));
         }
     }
 
-    #[test]
-    fn interpret_fundef() {
+    fn run_test(file: DirEntry) -> Result<(), String> {
+        let contents = read_to_string(file.path()).unwrap();
+        let lines = contents.split("\n").collect::<Vec<&str>>();
+
+        let mut test_code = vec![];
+
+        let mut idx = 0;
+        for (i, line) in lines.iter().enumerate() {
+            if line.starts_with("--- Test") {
+                continue;
+            }
+            if line.starts_with("--- Expected") {
+                idx = i;
+                break;
+            }
+            test_code.push(line.clone());
+        }
+
+        let mut expected_output = vec![];
+
+        for line in &lines[idx + 1..] {
+            if line.len() > 0 {
+                expected_output.push(*line);
+            }
+        }
+
+        let input = test_code.join("\n");
+
         let output = Command::new("cargo")
             .arg("run")
-            .arg("./src/tests/cases/fundef.jlox")
+            .arg("e")
+            .arg(input)
             .output()
             .unwrap();
+
         let lines = std::str::from_utf8(output.stdout.as_slice())
             .unwrap()
             .split("\n")
             .collect::<Vec<&str>>();
 
-        assert_eq!(lines.len(), 4, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "1");
-        assert_eq!(lines[1], "2");
-        assert_eq!(lines[2], "3");
-    }
+        if !(lines.len() == expected_output.len() || lines.len() == expected_output.len() + 1) {
+            return Err(format!(
+                "{:#?}: output length does not match expected output: {} != {}",
+                file.file_name(),
+                lines.len(),
+                expected_output.len(),
+            ));
+        }
 
-    #[test]
-    fn interpret_fun_mods_local_env() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/fun_mods_local_env.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
+        for (i, expected) in expected_output.iter().enumerate() {
+            if lines[i] != (*expected).trim() {
+                return Err(format!(
+                    "{:?}: {} != {}\nFull output:\n{}",
+                    file.file_name(),
+                    lines[i],
+                    expected,
+                    expected_output.join("\n"),
+                ));
+            }
+        }
 
-        assert_eq!(lines.len(), 2, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "3");
-    }
-
-    #[test]
-    fn interpret_funreturn() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/funreturn.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 2, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "5");
-    }
-
-    #[test]
-    fn interpret_funreturnnil() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/funreturnnil.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 4, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "1");
-        assert_eq!(lines[1], "2");
-        assert_eq!(lines[2], "nil");
-    }
-
-    #[test]
-    fn interpret_funcondreturn() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/funcondreturn.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 5, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "3");
-        assert_eq!(lines[1], "2");
-        assert_eq!(lines[2], "1");
-        assert_eq!(lines[3], "0");
-    }
-
-    #[test]
-    fn interpret_funverynested() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/funverynested.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 3, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "2");
-        assert_eq!(lines[1], "3");
-    }
-
-    #[test]
-    fn interpret_funclosure() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/funclosure.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 5, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "1");
-        assert_eq!(lines[1], "2");
-        assert_eq!(lines[2], "1");
-        assert_eq!(lines[3], "2");
-    }
-
-    #[test]
-    fn interpret_funanon() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/funanon.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 4, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "1");
-        assert_eq!(lines[1], "2");
-        assert_eq!(lines[2], "3");
-    }
-
-    #[test]
-    fn interpret_funanon2() {
-        let output = Command::new("cargo")
-            .arg("run")
-            .arg("./src/tests/cases/funanon2.jlox")
-            .output()
-            .unwrap();
-        let lines = std::str::from_utf8(output.stdout.as_slice())
-            .unwrap()
-            .split("\n")
-            .collect::<Vec<&str>>();
-
-        assert_eq!(lines.len(), 2, "Output: '{}'", lines.join("\n"));
-        assert_eq!(lines[0], "1");
+        return Ok(());
     }
 }
