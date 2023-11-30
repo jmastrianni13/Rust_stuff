@@ -165,4 +165,8 @@ impl Interpreter {
 
         return Ok(());
     }
+
+    pub fn resolve(&mut self, _exp: &expr::Expr, _steps: usize) -> Result<(), String> {
+        todo!()
+    }
 }
