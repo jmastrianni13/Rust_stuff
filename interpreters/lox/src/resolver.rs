@@ -157,7 +157,38 @@ impl Resolver {
     fn resolve_expr(&mut self, exp: &expr::Expr) -> Result<(), String> {
         match exp {
             expr::Expr::Variable { name: _ } => self.resolve_expr_var(exp),
-            expr::Expr::Assign { name: _, value: _ } => todo!(),
+            expr::Expr::Assign { name: _, value: _ } => self.resolve_expr_assign(exp),
+            expr::Expr::Binary {
+                left,
+                operator: _,
+                right,
+            } => {
+                self.resolve_expr(left)?;
+                return self.resolve_expr(right);
+            }
+            expr::Expr::Call {
+                callee,
+                paren: _,
+                arguments,
+            } => {
+                self.resolve_expr(callee.as_ref())?;
+                for arg in arguments {
+                    self.resolve_expr(arg)?;
+                }
+
+                return Ok(());
+            }
+            expr::Expr::Grouping { expression } => self.resolve_expr(expression),
+            expr::Expr::Literal { value: _ } => Ok(()),
+            expr::Expr::Logical {
+                left,
+                operator: _,
+                right,
+            } => {
+                self.resolve_expr(left)?;
+                return self.resolve_expr(right);
+            }
+            expr::Expr::Unary { operator: _, right } => self.resolve_expr(right),
             _ => todo!(),
         }
     }
