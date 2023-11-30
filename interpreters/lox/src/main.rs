@@ -15,10 +15,7 @@ use std::process;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() > 2 {
-        println!("Usage: lox [script]");
-        process::exit(64);
-    } else if args.len() == 2 {
+    if args.len() == 2 {
         match run_file(&args[1]) {
             Ok(_) => process::exit(0),
             Err(msg) => {
@@ -26,7 +23,15 @@ fn main() {
                 process::exit(1);
             }
         }
-    } else {
+    } else if args.len() == 3 && args[1] == "e" {
+        match run_string(&args[2]) {
+            Ok(_) => process::exit(0),
+            Err(msg) => {
+                println!("ERROR: {}", msg);
+                process::exit(1);
+            }
+        }
+    } else if args.len() == 1 {
         match run_prompt() {
             Ok(_) => process::exit(0),
             Err(msg) => {
@@ -34,6 +39,9 @@ fn main() {
                 process::exit(1);
             }
         }
+    } else {
+        println!("Usage: jlox [script]");
+        process::exit(64);
     }
 }
 
@@ -43,6 +51,11 @@ pub fn run_file(path: &str) -> Result<(), String> {
         Err(msg) => return Err(msg.to_string()),
         Ok(contents) => return run(&mut interp, &contents),
     }
+}
+
+pub fn run_string(contents: &str) -> Result<(), String> {
+    let mut interpreter = interpreter::Interpreter::new();
+    return run(&mut interpreter, contents);
 }
 
 fn run_prompt() -> Result<(), String> {
