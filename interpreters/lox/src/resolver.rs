@@ -87,26 +87,26 @@ impl Resolver {
             self.declare(name);
             self.define(name);
 
-            return self.resolve_function_helper(stm);
+            return self.resolve_function_helper(params, body);
         } else {
             panic!("incorrect type in resolve function");
         }
     }
 
-    fn resolve_function_helper(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
-        if let stmt::Stmt::Function { name, params, body } = stm {
-            self.begin_scope();
-            for param in params {
-                self.declare(param);
-                self.define(param);
-            }
-            self.resolve_many(body);
-            self.end_scope();
-
-            return Ok(());
-        } else {
-            panic!("incorrect type in resolve function helper");
+    fn resolve_function_helper(
+        &mut self,
+        params: &Vec<scanner::Token>,
+        body: &Vec<Box<stmt::Stmt>>,
+    ) -> Result<(), String> {
+        self.begin_scope();
+        for param in params {
+            self.declare(param);
+            self.define(param);
         }
+        self.resolve_many(body)?;
+        self.end_scope();
+
+        return Ok(());
     }
 
     fn resolve_if_stmt(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
@@ -189,7 +189,11 @@ impl Resolver {
                 return self.resolve_expr(right);
             }
             expr::Expr::Unary { operator: _, right } => self.resolve_expr(right),
-            _ => todo!(),
+            expr::Expr::AnonFunction {
+                paren: _,
+                arguments,
+                body,
+            } => self.resolve_function_helper(arguments, body),
         }
     }
 
