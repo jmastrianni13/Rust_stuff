@@ -27,12 +27,16 @@ impl Resolver {
                 name: _,
                 initializer: _,
             } => self.resolve_var(stm)?,
-            stmt::Stmt::Function { name, params, body } => self.resolve_function(stm)?,
+            stmt::Stmt::Function {
+                name: _,
+                params: _,
+                body: _,
+            } => self.resolve_function(stm)?,
             stmt::Stmt::Expression { expression } => self.resolve_expr(expression)?,
             stmt::Stmt::IfStmt {
-                predicate,
-                then,
-                els,
+                predicate: _,
+                then: _,
+                els: _,
             } => self.resolve_if_stmt(stm)?,
             stmt::Stmt::Print { expression } => self.resolve_expr(expression)?,
             stmt::Stmt::ReturnStmt {
@@ -47,9 +51,9 @@ impl Resolver {
                 self.resolve_expr(condition)?;
                 self.resolve(body.as_ref())?;
             }
-            _ => todo!(),
         }
-        todo!();
+
+        return Ok(());
     }
 
     fn resolve_many(&mut self, stmts: &Vec<Box<stmt::Stmt>>) -> Result<(), String> {
@@ -213,7 +217,7 @@ impl Resolver {
     fn resolve_local(&mut self, exp: &expr::Expr, name: &scanner::Token) -> Result<(), String> {
         let size = self.scopes.len();
         for i in (0..=(size - 1)).rev() {
-            let scope = self.scopes[i];
+            let scope = &self.scopes[i];
             if scope.contains_key(&name.lexeme) {
                 self.interp.resolve(exp, size - 1 - i)?;
                 return Ok(());
