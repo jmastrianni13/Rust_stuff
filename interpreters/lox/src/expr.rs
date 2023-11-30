@@ -182,6 +182,23 @@ impl std::fmt::Debug for Expr {
     }
 }
 
+impl core::hash::Hash for Expr {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::ptr::hash(self, state);
+    }
+}
+
+impl std::cmp::PartialEq for Expr {
+    fn eq(&self, other: &Self) -> bool {
+        let ptr_self = std::ptr::addr_of!(self);
+        let ptr_other = std::ptr::addr_of!(other);
+
+        return ptr_self == ptr_other;
+    }
+}
+
+impl std::cmp::Eq for Expr {}
+
 #[derive(Clone)]
 pub enum Expr {
     AnonFunction {
@@ -491,6 +508,84 @@ impl Expr {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn expr_is_hashable() {
+        let mut map = HashMap::new();
+        let minus_token = scanner::Token {
+            token_type: scanner::TokenType::Minus,
+            lexeme: "-".to_string(),
+            literal: None,
+            line_number: 0,
+        };
+        let onetwothree = Box::from(Expr::Literal {
+            value: LiteralValue::Number(123.0),
+        });
+        let group = Expr::Grouping {
+            expression: Box::from(Expr::Literal {
+                value: LiteralValue::Number(45.67),
+            }),
+        };
+        let multi = scanner::Token {
+            token_type: scanner::TokenType::Star,
+            lexeme: "*".to_string(),
+            literal: None,
+            line_number: 0,
+        };
+
+        let exp = Expr::Binary {
+            left: Box::from(Expr::Unary {
+                operator: minus_token,
+                right: Box::from(onetwothree),
+            }),
+            operator: multi,
+            right: Box::from(group),
+        };
+
+        let exp = std::rc::Rc::new(exp);
+        map.insert(exp.clone(), 2);
+        match map.get(&exp) {
+            Some(_) => (),
+            None => panic!("unable to get value from hashmap"),
+        }
+
+        let minus_token = scanner::Token {
+            token_type: scanner::TokenType::Minus,
+            lexeme: "-".to_string(),
+            literal: None,
+            line_number: 0,
+        };
+        let onetwothree = Box::from(Expr::Literal {
+            value: LiteralValue::Number(123.0),
+        });
+        let group = Expr::Grouping {
+            expression: Box::from(Expr::Literal {
+                value: LiteralValue::Number(45.67),
+            }),
+        };
+        let multi = scanner::Token {
+            token_type: scanner::TokenType::Star,
+            lexeme: "*".to_string(),
+            literal: None,
+            line_number: 0,
+        };
+
+        let exp = Expr::Binary {
+            left: Box::from(Expr::Unary {
+                operator: minus_token,
+                right: Box::from(onetwothree),
+            }),
+            operator: multi,
+            right: Box::from(group),
+        };
+
+        let exp = std::rc::Rc::new(exp);
+        match map.get(&exp) {
+            None => (),
+            Some(_) => panic!("incorrectly able to get value from hashmap"),
+        }
+    }
 
     #[test]
     fn pretty_print_ast() {
