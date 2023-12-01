@@ -5,6 +5,7 @@ fn main() {
     demo_unsafe_functions();
     demo_unsafe_abstraction();
     demo_extern();
+    demo_mut_static_var();
 }
 
 fn demo_raw_pointers() {
@@ -26,6 +27,8 @@ fn demo_raw_pointers() {
         println!("r1 is: {}", *r1);
         println!("r2 is: {}", *r2);
     }
+
+    demo_mut_static_var();
 }
 
 fn demo_unsafe_functions() {
@@ -65,5 +68,21 @@ extern "C" {
 fn demo_extern() {
     unsafe {
         println!("Absolute value of -3 accroding to C: {}", abs(-3));
+    }
+}
+
+static mut COUNTER: u32 = 0;
+
+fn add_to_counter(inc: u32) {
+    unsafe {
+        COUNTER += inc;
+    }
+}
+
+fn demo_mut_static_var() {
+    add_to_counter(3);
+
+    unsafe {
+        println!("COUNTER: {}", COUNTER);
     }
 }
