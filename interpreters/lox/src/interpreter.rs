@@ -3,6 +3,7 @@ use crate::expr;
 use crate::scanner;
 use crate::stmt;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
@@ -17,12 +18,23 @@ fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
 pub struct Interpreter {
     pub specials: Rc<RefCell<environment::Environment>>,
     pub environment: Rc<RefCell<environment::Environment>>,
+    pub globals: HashMap<String, expr::LiteralValue>,
+    pub locals: Rc<RefCell<HashMap<usize, usize>>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
-        let mut env = environment::Environment::new();
-        env.define(
+        return Self {
+            specials: Rc::new(RefCell::new(environment::Environment::new())),
+            environment: Rc::new(RefCell::new(environment::Environment::new())),
+            globals: Interpreter::get_globals(),
+            locals: Rc::new(RefCell::new(HashMap::new())),
+        };
+    }
+
+    pub fn get_globals() -> HashMap<String, expr::LiteralValue> {
+        let mut env = HashMap::new();
+        env.insert(
             "clock".to_string(),
             expr::LiteralValue::Callable {
                 name: "clock".to_string(),
@@ -30,10 +42,8 @@ impl Interpreter {
                 fun: Rc::new(clock_impl),
             },
         );
-        return Self {
-            specials: Rc::new(RefCell::new(environment::Environment::new())),
-            environment: Rc::new(RefCell::new(env)),
-        };
+
+        return env;
     }
 
     fn for_closure(parent: Rc<RefCell<environment::Environment>>) -> Self {
@@ -43,6 +53,8 @@ impl Interpreter {
         return Self {
             specials: Rc::new(RefCell::new(environment::Environment::new())),
             environment,
+            globals: Interpreter::get_globals(),
+            locals: Rc::new(RefCell::new(HashMap::new())),
         };
     }
 
@@ -52,6 +64,8 @@ impl Interpreter {
         return Self {
             specials: Rc::new(RefCell::new(environment::Environment::new())),
             environment: Rc::new(RefCell::new(env)),
+            globals: Interpreter::get_globals(),
+            locals: Rc::new(RefCell::new(HashMap::new())),
         };
     }
 
@@ -59,6 +73,7 @@ impl Interpreter {
         for stmt in stmts {
             match stmt {
                 stmt::Stmt::Expression { expression } => {
+                    let _distance = self.get_distance(&expression);
                     expression.evaluate(self.environment.clone())?;
                 }
                 stmt::Stmt::Print { expression } => {
@@ -166,7 +181,14 @@ impl Interpreter {
         return Ok(());
     }
 
-    pub fn resolve(&mut self, _exp: &expr::Expr, _steps: usize) -> Result<(), String> {
-        todo!()
+    pub fn resolve(&mut self, exp: &expr::Expr, steps: usize) -> Result<(), String> {
+        let addr = std::ptr::addr_of!(exp) as usize;
+        self.locals.borrow_mut().insert(addr, steps);
+        return Ok(());
+    }
+
+    pub fn get_distance(&mut self, exp: &expr::Expr) -> Option<usize> {
+        let addr = std::ptr::addr_of!(exp) as usize;
+        return self.locals.borrow().get(&addr).copied();
     }
 }
