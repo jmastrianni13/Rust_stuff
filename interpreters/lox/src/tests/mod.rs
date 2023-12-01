@@ -11,6 +11,7 @@ mod tests {
         for case in cases {
             let case = case.unwrap();
             let name = case.path().display().to_string();
+            println!("> testing {name}");
             if name.contains(".swp") {
                 continue;
             }
@@ -67,10 +68,11 @@ mod tests {
 
         if !(lines.len() == expected_output.len() || lines.len() == expected_output.len() + 1) {
             return Err(format!(
-                "{:#?}: output length does not match expected output: {} != {}",
+                "{:#?}: output length does not match expected output: {} != {}\nFull output:\n{}",
                 file.file_name(),
                 lines.len(),
                 expected_output.len(),
+                lines.join("\n"),
             ));
         }
 
@@ -81,7 +83,7 @@ mod tests {
                     file.file_name(),
                     lines[i],
                     expected,
-                    expected_output.join("\n"),
+                    lines.join("\n"),
                 ));
             }
         }
