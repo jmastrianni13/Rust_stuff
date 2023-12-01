@@ -6,19 +6,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::SystemTime::UNIX_EPOCH)
-        .expect("could not get system time")
-        .as_millis();
-
-    return expr::LiteralValue::Number(now as f64 / 1000.0);
-}
-
 pub struct Interpreter {
     pub specials: Rc<RefCell<environment::Environment>>,
     pub environment: Rc<RefCell<environment::Environment>>,
-    pub globals: HashMap<String, expr::LiteralValue>,
     pub locals: Rc<RefCell<HashMap<usize, usize>>>,
 }
 
@@ -27,23 +17,8 @@ impl Interpreter {
         return Self {
             specials: Rc::new(RefCell::new(environment::Environment::new())),
             environment: Rc::new(RefCell::new(environment::Environment::new())),
-            globals: Interpreter::get_globals(),
             locals: Rc::new(RefCell::new(HashMap::new())),
         };
-    }
-
-    pub fn get_globals() -> HashMap<String, expr::LiteralValue> {
-        let mut env = HashMap::new();
-        env.insert(
-            "clock".to_string(),
-            expr::LiteralValue::Callable {
-                name: "clock".to_string(),
-                arity: 0,
-                fun: Rc::new(clock_impl),
-            },
-        );
-
-        return env;
     }
 
     fn for_closure(parent: Rc<RefCell<environment::Environment>>) -> Self {
@@ -53,7 +28,6 @@ impl Interpreter {
         return Self {
             specials: Rc::new(RefCell::new(environment::Environment::new())),
             environment,
-            globals: Interpreter::get_globals(),
             locals: Rc::new(RefCell::new(HashMap::new())),
         };
     }
@@ -64,7 +38,6 @@ impl Interpreter {
         return Self {
             specials: Rc::new(RefCell::new(environment::Environment::new())),
             environment: Rc::new(RefCell::new(env)),
-            globals: Interpreter::get_globals(),
             locals: Rc::new(RefCell::new(HashMap::new())),
         };
     }
