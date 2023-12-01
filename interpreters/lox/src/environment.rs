@@ -1,9 +1,11 @@
 use crate::expr;
+use crate::interpreter;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Environment {
+    globals: HashMap<String, expr::LiteralValue>,
     values: HashMap<String, expr::LiteralValue>,
     pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
@@ -11,6 +13,7 @@ pub struct Environment {
 impl Environment {
     pub fn new() -> Self {
         return Self {
+            globals: interpreter::Interpreter::get_globals(),
             values: HashMap::new(),
             enclosing: None,
         };
@@ -33,7 +36,7 @@ impl Environment {
         match (value, &self.enclosing) {
             (Some(val), _) => Some(val.clone()),
             (None, Some(env)) => env.borrow().get(name),
-            (None, None) => None,
+            (None, None) => self.globals.get(name).cloned(),
         }
     }
 
