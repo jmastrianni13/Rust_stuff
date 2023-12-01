@@ -3,6 +3,8 @@ use std::slice;
 fn main() {
     demo_raw_pointers();
     demo_unsafe_functions();
+    demo_unsafe_abstraction();
+    demo_extern();
 }
 
 fn demo_raw_pointers() {
@@ -36,7 +38,7 @@ fn demo_unsafe_functions() {
 
 fn demo_unsafe_abstraction() {
     fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
-        let len = value.len();
+        let len = values.len();
         let ptr = values.as_mut_ptr();
 
         assert!(mid <= len);
@@ -47,5 +49,21 @@ fn demo_unsafe_abstraction() {
                 slice::from_raw_parts_mut(ptr.add(mid), len - mid),
                 );
         }
+    }
+
+    let mut v = vec![1, 2, 3, 4, 5, 6];
+    let (left, right) = split_at_mut(&mut v, 3);
+    println!("left of split: {:?}", left);
+    println!("right of split: {:?}", right);
+
+}
+
+extern "C" {
+    fn abs(input: i32) -> i32;
+}
+
+fn demo_extern() {
+    unsafe {
+        println!("Absolute value of -3 accroding to C: {}", abs(-3));
     }
 }
