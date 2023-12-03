@@ -334,7 +334,9 @@ impl Expr {
             }
             Expr::Assign { name, value } => {
                 let new_value = (*value).evaluate(env.clone(), distance)?;
-                let assign_success = env.borrow_mut().assign(&name.lexeme, new_value.clone());
+                let assign_success =
+                    env.borrow_mut()
+                        .assign(&name.lexeme, new_value.clone(), distance);
                 if assign_success {
                     return Ok(new_value);
                 } else {
