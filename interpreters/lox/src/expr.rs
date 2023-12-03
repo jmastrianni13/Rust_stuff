@@ -289,6 +289,7 @@ impl Expr {
     pub fn evaluate(
         &self,
         env: Rc<RefCell<environment::Environment>>,
+        distance: Option<usize>,
     ) -> Result<LiteralValue, String> {
         match self {
             Expr::AnonFunction {
@@ -318,7 +319,7 @@ impl Expr {
                         ));
 
                         if let Some(value) = anon_int.specials.borrow().get("return") {
-                            return value;
+                            return value.clone();
                         }
                     }
 
@@ -332,7 +333,7 @@ impl Expr {
                 });
             }
             Expr::Assign { name, value } => {
-                let new_value = (*value).evaluate(env.clone())?;
+                let new_value = (*value).evaluate(env.clone(), distance)?;
                 let assign_success = env.borrow_mut().assign(&name.lexeme, new_value.clone());
                 if assign_success {
                     return Ok(new_value);
@@ -340,7 +341,7 @@ impl Expr {
                     return Err(format!("variable '{}' has not been declared", name.lexeme));
                 }
             }
-            Expr::Variable { name } => match env.borrow().get(&name.lexeme) {
+            Expr::Variable { name } => match env.borrow().get(&name.lexeme, distance) {
                 Some(value) => Ok(value.clone()),
                 None => Err(format!("variable '{}' has not been declared", name.lexeme)),
             },
@@ -349,7 +350,7 @@ impl Expr {
                 paren: _,
                 arguments,
             } => {
-                let callable = (*callee).evaluate(env.clone())?;
+                let callable = (*callee).evaluate(env.clone(), distance)?;
                 match callable {
                     LiteralValue::Callable { name, arity, fun } => {
                         if arguments.len() != arity {
@@ -362,7 +363,7 @@ impl Expr {
                         }
                         let mut arg_vals = vec![];
                         for arg in arguments {
-                            let val = arg.evaluate(env.clone())?;
+                            let val = arg.evaluate(env.clone(), distance)?;
                             arg_vals.push(val);
                         }
                         return Ok(fun(&arg_vals));
@@ -377,28 +378,28 @@ impl Expr {
                 right,
             } => match operator.token_type {
                 scanner::TokenType::Or => {
-                    let lhs_value = left.evaluate(env.clone())?;
+                    let lhs_value = left.evaluate(env.clone(), distance)?;
                     let lhs_true = lhs_value.is_truthy();
                     if lhs_true == LiteralValue::True {
                         return Ok(lhs_value);
                     } else {
-                        return right.evaluate(env.clone());
+                        return right.evaluate(env.clone(), distance);
                     }
                 }
                 scanner::TokenType::And => {
-                    let lhs_value = left.evaluate(env.clone())?;
+                    let lhs_value = left.evaluate(env.clone(), distance)?;
                     let lhs_true = lhs_value.is_truthy();
                     if lhs_true == LiteralValue::False {
                         return Ok(lhs_true);
                     } else {
-                        return right.evaluate(env.clone());
+                        return right.evaluate(env.clone(), distance);
                     }
                 }
                 ttype => Err(format!("Invalid token in logical expression: {}", ttype)),
             },
-            Expr::Grouping { expression } => expression.evaluate(env.clone()),
+            Expr::Grouping { expression } => expression.evaluate(env.clone(), distance),
             Expr::Unary { operator, right } => {
-                let right = right.evaluate(env.clone())?;
+                let right = right.evaluate(env.clone(), distance)?;
 
                 match (&right, operator.token_type) {
                     (LiteralValue::Number(x), scanner::TokenType::Minus) => {
@@ -417,8 +418,8 @@ impl Expr {
                 operator,
                 right,
             } => {
-                let left = left.evaluate(env.clone())?;
-                let right = right.evaluate(env.clone())?;
+                let left = left.evaluate(env.clone(), distance)?;
+                let right = right.evaluate(env.clone(), distance)?;
 
                 match (&left, operator.token_type, &right) {
                     (

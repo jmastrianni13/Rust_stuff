@@ -45,20 +45,19 @@ impl Environment {
         self.values.insert(name, value);
     }
 
-    pub fn define_top_level(&mut self, name: String, value: expr::LiteralValue) {
-        match &self.enclosing {
-            None => self.define(name, value),
-            Some(env) => env.borrow_mut().define_top_level(name, value),
-        }
-    }
-
-    pub fn get(&self, name: &str) -> Option<expr::LiteralValue> {
-        let value = self.values.get(name);
-
-        match (value, &self.enclosing) {
-            (Some(val), _) => Some(val.clone()),
-            (None, Some(env)) => env.borrow().get(name),
-            (None, None) => self.globals.get(name).cloned(),
+    pub fn get(&self, name: &str, distance: Option<usize>) -> Option<expr::LiteralValue> {
+        if let None = distance {
+            return self.globals.get(name).cloned();
+        } else {
+            let distance = distance.unwrap();
+            if distance == 0 {
+                self.values.get(name).cloned()
+            } else {
+                match &self.enclosing {
+                    None => panic!("tried to resolve a variable that was defined deeper than the current environment depth"),
+                    Some(env) => env.borrow().get(name, Some(distance - 1)),
+                }
+            }
         }
     }
 
