@@ -207,11 +207,9 @@ impl Resolver {
     fn resolve_expr_var(&mut self, exp: &expr::Expr) -> Result<(), String> {
         if let expr::Expr::Variable { name } = exp {
             if !self.scopes.is_empty() {
-                if let Some(false) =  self.scopes[self.scopes.len() - 1]
-                    .get(&name.lexeme)
-            {
-                return Err("cannot read local varaible in its own initializer".to_string());
-            }
+                if let Some(false) = self.scopes[self.scopes.len() - 1].get(&name.lexeme) {
+                    return Err("cannot read local varaible in its own initializer".to_string());
+                }
             }
             return self.resolve_local(exp, name);
         } else {

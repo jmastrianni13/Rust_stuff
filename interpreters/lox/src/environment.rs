@@ -27,7 +27,6 @@ fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
 }
 
 pub struct Environment {
-    globals: Rc<RefCell<HashMap<String, expr::LiteralValue>>>,
     values: HashMap<String, expr::LiteralValue>,
     pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
@@ -35,24 +34,10 @@ pub struct Environment {
 impl Environment {
     pub fn new() -> Self {
         return Self {
-            globals: Rc::new(RefCell::new(get_globals())),
-            values: HashMap::new(),
+            values: get_globals(),
             enclosing: None,
         };
     }
-
-    // pub fn define(&mut self, name: String, value: expr::LiteralValue, distance: Option<usize>) {
-    //     if let None = distance {
-    //         self.globals.borrow_mut().insert(name, value);
-    //     } else {
-    //         let distance = distance.unwrap();
-    //         if distance == 0 {
-    //             self.values.insert(name, value);
-    //         } else {
-    //             self.define(name, value, Some(distance - 1));
-    //         }
-    //     }
-    // }
 
     pub fn define(&mut self, name: String, value: expr::LiteralValue) {
         self.values.insert(name, value);
@@ -60,7 +45,10 @@ impl Environment {
 
     pub fn get(&self, name: &str, distance: Option<usize>) -> Option<expr::LiteralValue> {
         if let None = distance {
-            return self.globals.borrow().get(name).cloned();
+            match &self.enclosing {
+                None => self.values.get(name).cloned(),
+                Some(env) => env.borrow().get(name, distance),
+            }
         } else {
             let distance = distance.unwrap();
             if distance == 0 {
@@ -84,8 +72,13 @@ impl Environment {
         distance: Option<usize>,
     ) -> bool {
         if let None = distance {
-            self.globals.borrow_mut().insert(name.to_string(), value);
-            return true;
+            match &self.enclosing {
+                Some(env) => env.borrow_mut().assign(name, value, distance),
+                None => match self.values.insert(name.to_string(), value) {
+                    Some(_) => true,
+                    None => false,
+                },
+            }
         } else {
             let distance = distance.unwrap();
             if distance == 0 {
