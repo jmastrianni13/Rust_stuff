@@ -309,7 +309,6 @@ impl Expr {
                         anon_int.environment.borrow_mut().define(
                             arguments[i].lexeme.clone(),
                             (*arg).clone(),
-                            Some(0 as usize),
                         );
                     }
 

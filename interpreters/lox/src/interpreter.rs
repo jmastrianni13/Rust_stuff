@@ -60,7 +60,7 @@ impl Interpreter {
 
                     self.environment
                         .borrow_mut()
-                        .define(name.lexeme.clone(), value, distance);
+                        .define(name.lexeme.clone(), value);
                 }
                 stmt::Stmt::Block { statements } => {
                     let mut new_environment = environment::Environment::new();
@@ -114,8 +114,7 @@ impl Interpreter {
                         for (i, arg) in args.iter().enumerate() {
                             clos_int.environment.borrow_mut().define(
                                 params[i].lexeme.clone(),
-                                (*arg).clone(),
-                                Some(0 as usize),
+                                (*arg).clone()
                             );
                         }
 
@@ -140,8 +139,7 @@ impl Interpreter {
 
                     self.environment.borrow_mut().define(
                         name.lexeme.clone(),
-                        callable,
-                        Some(0 as usize),
+                        callable
                     );
                 }
                 stmt::Stmt::ReturnStmt { keyword: _, value } => {
