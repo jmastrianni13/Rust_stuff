@@ -2,24 +2,24 @@ use crate::expr;
 use crate::interpreter;
 use crate::scanner;
 use crate::stmt;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 #[allow(dead_code)]
 pub struct Resolver {
-    interp: interpreter::Interpreter,
+    pub interp: Rc<RefCell<interpreter::Interpreter>>,
     scopes: Vec<HashMap<String, bool>>,
 }
 
 impl Resolver {
-    #[allow(dead_code)]
-    pub fn new() -> Self {
+    pub fn new(interp: Rc<RefCell<interpreter::Interpreter>>) -> Self {
         return Self {
-            interp: interpreter::Interpreter::new(),
+            interp,
             scopes: vec![],
         };
     }
 
-    #[allow(dead_code)]
     pub fn resolve(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
         match stm {
             stmt::Stmt::Block { statements: _ } => self.resolve_block(stm)?,
@@ -56,9 +56,9 @@ impl Resolver {
         return Ok(());
     }
 
-    fn resolve_many(&mut self, stmts: &Vec<Box<stmt::Stmt>>) -> Result<(), String> {
+    pub fn resolve_many(&mut self, stmts: &Vec<&stmt::Stmt>) -> Result<(), String> {
         for stm in stmts {
-            self.resolve(stm.as_ref())?;
+            self.resolve(stm)?;
         }
         return Ok(());
     }
@@ -67,7 +67,7 @@ impl Resolver {
         match stm {
             stmt::Stmt::Block { statements } => {
                 self.begin_scope();
-                self.resolve_many(statements)?;
+                self.resolve_many(&statements.iter().map(|b| b.as_ref()).collect())?;
                 self.end_scope();
             }
             _ => panic!("incorrect type"),
@@ -91,7 +91,8 @@ impl Resolver {
             self.declare(name);
             self.define(name);
 
-            return self.resolve_function_helper(params, body);
+            return self
+                .resolve_function_helper(params, &body.iter().map(|b| b.as_ref()).collect());
         } else {
             panic!("incorrect type in resolve function");
         }
@@ -100,7 +101,7 @@ impl Resolver {
     fn resolve_function_helper(
         &mut self,
         params: &Vec<scanner::Token>,
-        body: &Vec<Box<stmt::Stmt>>,
+        body: &Vec<&stmt::Stmt>,
     ) -> Result<(), String> {
         self.begin_scope();
         for param in params {
@@ -197,7 +198,9 @@ impl Resolver {
                 paren: _,
                 arguments,
                 body,
-            } => self.resolve_function_helper(arguments, body),
+            } => {
+                self.resolve_function_helper(arguments, &body.iter().map(|b| b.as_ref()).collect())
+            }
         }
     }
 
@@ -219,7 +222,7 @@ impl Resolver {
         for i in (0..=(size - 1)).rev() {
             let scope = &self.scopes[i];
             if scope.contains_key(&name.lexeme) {
-                self.interp.resolve(exp, size - 1 - i)?;
+                self.interp.borrow_mut().resolve(exp, size - 1 - i)?;
                 return Ok(());
             }
         }

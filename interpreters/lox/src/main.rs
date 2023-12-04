@@ -7,10 +7,12 @@ mod scanner;
 mod stmt;
 mod tests;
 
+use std::cell::RefCell;
 use std::env;
 use std::fs;
 use std::io::{self, BufRead, Write};
 use std::process;
+use std::rc::Rc;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -46,20 +48,20 @@ fn main() {
 }
 
 pub fn run_file(path: &str) -> Result<(), String> {
-    let mut interp = interpreter::Interpreter::new();
+    let interp = Rc::new(RefCell::new(interpreter::Interpreter::new()));
     match fs::read_to_string(path) {
         Err(msg) => return Err(msg.to_string()),
-        Ok(contents) => return run(&mut interp, &contents),
+        Ok(contents) => return run(interp, &contents),
     }
 }
 
 pub fn run_string(contents: &str) -> Result<(), String> {
-    let mut interpreter = interpreter::Interpreter::new();
-    return run(&mut interpreter, contents);
+    let interpreter = Rc::new(RefCell::new(interpreter::Interpreter::new()));
+    return run(interpreter, contents);
 }
 
 fn run_prompt() -> Result<(), String> {
-    let mut interp = interpreter::Interpreter::new();
+    let interp = Rc::new(RefCell::new(interpreter::Interpreter::new()));
     let mut buffer = String::new();
     loop {
         print!("> ");
@@ -81,21 +83,23 @@ fn run_prompt() -> Result<(), String> {
         }
 
         println!("got: {}", &buffer[current_length..]);
-        match run(&mut interp, &buffer[current_length..]) {
+        match run(interp.clone(), &buffer[current_length..]) {
             Ok(_) => (),
             Err(msg) => println!("{}", msg),
         }
     }
 }
 
-fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), String> {
+fn run(interp: Rc<RefCell<interpreter::Interpreter>>, contents: &str) -> Result<(), String> {
     let mut scanner = scanner::Scanner::new(contents);
     scanner.scan_tokens()?;
     let tokens = scanner.tokens;
 
     let mut parser = parser::Parser::new(tokens);
     let statements = parser.parse()?;
+    let mut resolver = resolver::Resolver::new(interp.clone());
+    resolver.resolve_many(&statements.iter().collect())?;
 
-    interp.interpret(statements.iter().collect())?;
+    interp.borrow_mut().interpret(statements.iter().collect())?;
     return Ok(());
 }
