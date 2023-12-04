@@ -60,7 +60,7 @@ impl Interpreter {
 
                     self.environment
                         .borrow_mut()
-                        .define(name.lexeme.clone(), value);
+                        .define(name.lexeme.clone(), value, distance);
                 }
                 stmt::Stmt::Block { statements } => {
                     let mut new_environment = environment::Environment::new();
@@ -112,10 +112,11 @@ impl Interpreter {
                         let mut clos_int = Interpreter::for_closure(parent_env.clone());
 
                         for (i, arg) in args.iter().enumerate() {
-                            clos_int
-                                .environment
-                                .borrow_mut()
-                                .define(params[i].lexeme.clone(), (*arg).clone());
+                            clos_int.environment.borrow_mut().define(
+                                params[i].lexeme.clone(),
+                                (*arg).clone(),
+                                Some(0 as usize),
+                            );
                         }
 
                         for i in 0..(body.len()) {
@@ -137,9 +138,11 @@ impl Interpreter {
                         fun: Rc::new(fun_impl),
                     };
 
-                    self.environment
-                        .borrow_mut()
-                        .define(name.lexeme.clone(), callable);
+                    self.environment.borrow_mut().define(
+                        name.lexeme.clone(),
+                        callable,
+                        Some(0 as usize),
+                    );
                 }
                 stmt::Stmt::ReturnStmt { keyword: _, value } => {
                     let eval_val;

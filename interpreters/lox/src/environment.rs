@@ -41,8 +41,17 @@ impl Environment {
         };
     }
 
-    pub fn define(&mut self, name: String, value: expr::LiteralValue) {
-        self.values.insert(name, value);
+    pub fn define(&mut self, name: String, value: expr::LiteralValue, distance: Option<usize>) {
+        if let None = distance {
+            self.globals.borrow_mut().insert(name, value);
+        } else {
+            let distance = distance.unwrap();
+            if distance == 0 {
+                self.values.insert(name, value);
+            } else {
+                self.define(name, value, Some(distance - 1));
+            }
+        }
     }
 
     pub fn get(&self, name: &str, distance: Option<usize>) -> Option<expr::LiteralValue> {
@@ -55,7 +64,10 @@ impl Environment {
             } else {
                 match &self.enclosing {
                     None => panic!("tried to resolve a variable that was defined deeper than the current environment depth"),
-                    Some(env) => env.borrow().get(name, Some(distance - 1)),
+                    Some(env) => {
+                        assert!(distance > 0);
+                        env.borrow().get(name, Some(distance - 1))
+                    }
                 }
             }
         }

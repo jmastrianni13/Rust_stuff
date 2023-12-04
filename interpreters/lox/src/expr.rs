@@ -306,10 +306,11 @@ impl Expr {
                 let fun_impl = move |args: &Vec<LiteralValue>| {
                     let mut anon_int = interpreter::Interpreter::for_anon(env_clone.clone());
                     for (i, arg) in args.iter().enumerate() {
-                        anon_int
-                            .environment
-                            .borrow_mut()
-                            .define(arguments[i].lexeme.clone(), (*arg).clone());
+                        anon_int.environment.borrow_mut().define(
+                            arguments[i].lexeme.clone(),
+                            (*arg).clone(),
+                            Some(0 as usize),
+                        );
                     }
 
                     for i in 0..(body.len()) {
@@ -333,6 +334,7 @@ impl Expr {
                 });
             }
             Expr::Assign { name, value } => {
+                println!("distance in assign {:?}", distance);
                 let new_value = (*value).evaluate(env.clone(), distance)?;
                 let assign_success =
                     env.borrow_mut()
