@@ -142,12 +142,12 @@ impl Resolver {
     }
 
     fn declare(&mut self, name: &scanner::Token) {
+        let size = self.scopes.len();
         if self.scopes.is_empty() {
             return; // scopes vec is empty, must be in global scope so do nothing
         }
 
-        let size = self.scopes.len() - 1;
-        self.scopes[size].insert(name.lexeme.clone(), false);
+        self.scopes[size - 1].insert(name.lexeme.clone(), false);
     }
 
     fn define(&mut self, name: &scanner::Token) {
@@ -155,15 +155,20 @@ impl Resolver {
             return; // scopes vec is empty, must be in global scope so do nothing
         }
 
-        let size = self.scopes.len() - 1;
-        self.scopes[size].insert(name.lexeme.clone(), true);
+        let size = self.scopes.len();
+        self.scopes[size - 1].insert(name.lexeme.clone(), true);
     }
 
     fn resolve_expr(&mut self, exp: &expr::Expr) -> Result<(), String> {
         match exp {
-            expr::Expr::Variable { name: _ } => self.resolve_expr_var(exp),
-            expr::Expr::Assign { name: _, value: _ } => self.resolve_expr_assign(exp),
+            expr::Expr::Variable { id: _, name: _ } => self.resolve_expr_var(exp),
+            expr::Expr::Assign {
+                id: _,
+                name: _,
+                value: _,
+            } => self.resolve_expr_assign(exp),
             expr::Expr::Binary {
+                id: _,
                 left,
                 operator: _,
                 right,
@@ -172,20 +177,23 @@ impl Resolver {
                 return self.resolve_expr(right);
             }
             expr::Expr::Call {
-                callee,
+                id: _,
+                callee: _,
                 paren: _,
                 arguments,
             } => {
-                self.resolve_expr(callee.as_ref())?;
+                // self.resolve_expr(callee.as_ref())?;
+                self.resolve_expr_var(&exp)?;
                 for arg in arguments {
                     self.resolve_expr(arg)?;
                 }
 
                 return Ok(());
             }
-            expr::Expr::Grouping { expression } => self.resolve_expr(expression),
-            expr::Expr::Literal { value: _ } => Ok(()),
+            expr::Expr::Grouping { id: _, expression } => self.resolve_expr(expression),
+            expr::Expr::Literal { id: _, value: _ } => Ok(()),
             expr::Expr::Logical {
+                id: _,
                 left,
                 operator: _,
                 right,
@@ -193,8 +201,13 @@ impl Resolver {
                 self.resolve_expr(left)?;
                 return self.resolve_expr(right);
             }
-            expr::Expr::Unary { operator: _, right } => self.resolve_expr(right),
+            expr::Expr::Unary {
+                id: _,
+                operator: _,
+                right,
+            } => self.resolve_expr(right),
             expr::Expr::AnonFunction {
+                id: _,
                 paren: _,
                 arguments,
                 body,
@@ -205,15 +218,25 @@ impl Resolver {
     }
 
     fn resolve_expr_var(&mut self, exp: &expr::Expr) -> Result<(), String> {
-        if let expr::Expr::Variable { name } = exp {
-            if !self.scopes.is_empty() {
-                if let Some(false) = self.scopes[self.scopes.len() - 1].get(&name.lexeme) {
-                    return Err("cannot read local varaible in its own initializer".to_string());
+        match exp {
+            expr::Expr::Variable { id: _, name } => {
+                if !self.scopes.is_empty() {
+                    if let Some(false) = self.scopes[self.scopes.len() - 1].get(&name.lexeme) {
+                        return Err("cannot read local varaible in its own initializer".to_string());
+                    }
                 }
+                return self.resolve_local(exp, name);
             }
-            return self.resolve_local(exp, name);
-        } else {
-            panic!("incorrect type in resolve_expr_var");
+            expr::Expr::Call {
+                id: _,
+                callee,
+                paren: _,
+                arguments: _,
+            } => match callee.as_ref() {
+                expr::Expr::Variable { id: _, name } => self.resolve_local(exp, &name),
+                _ => panic!("incorrect type in resolve_expr_var"),
+            },
+            _ => panic!("incorrect type in resolve_expr_var"),
         }
     }
 
@@ -234,7 +257,7 @@ impl Resolver {
     }
 
     fn resolve_expr_assign(&mut self, exp: &expr::Expr) -> Result<(), String> {
-        if let expr::Expr::Assign { name, value } = exp {
+        if let expr::Expr::Assign { id: _, name, value } = exp {
             self.resolve_expr(value.as_ref())?;
             self.resolve_local(exp, name)?;
         } else {

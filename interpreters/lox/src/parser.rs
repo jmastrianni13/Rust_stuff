@@ -11,6 +11,7 @@ enum FunctionKind {
 pub struct Parser {
     tokens: Vec<scanner::Token>,
     current: usize,
+    next_id: usize,
 }
 
 impl Parser {
@@ -18,7 +19,15 @@ impl Parser {
         Self {
             tokens: tokens,
             current: 0,
+            next_id: 0,
         }
+    }
+
+    fn get_id(&mut self) -> usize {
+        let id = self.next_id;
+        self.next_id += 1;
+
+        return id;
     }
 
     pub fn parse(&mut self) -> Result<Vec<stmt::Stmt>, String> {
@@ -110,6 +119,7 @@ impl Parser {
             initializer = self.expression()?;
         } else {
             initializer = expr::Expr::Literal {
+                id: self.get_id(),
                 value: expr::LiteralValue::Nil,
             };
         }
@@ -216,6 +226,7 @@ impl Parser {
         match condition {
             None => {
                 cond = expr::Expr::Literal {
+                    id: self.get_id(),
                     value: expr::LiteralValue::True,
                 }
             }
@@ -345,6 +356,7 @@ impl Parser {
         };
 
         return Ok(expr::Expr::AnonFunction {
+            id: self.get_id(),
             paren,
             arguments: parameters,
             body,
@@ -358,8 +370,9 @@ impl Parser {
             let value = self.expression()?;
 
             match exp {
-                expr::Expr::Variable { name } => {
+                expr::Expr::Variable { id: _, name } => {
                     return Ok(expr::Expr::Assign {
+                        id: self.get_id(),
                         name: name,
                         value: Box::from(value),
                     });
@@ -379,6 +392,7 @@ impl Parser {
             let right = self.and()?;
 
             exp = expr::Expr::Logical {
+                id: self.get_id(),
                 left: Box::new(exp),
                 operator: operator,
                 right: Box::new(right),
@@ -395,6 +409,7 @@ impl Parser {
             let operator = self.previous();
             let right = self.equality()?;
             exp = expr::Expr::Logical {
+                id: self.get_id(),
                 left: Box::new(exp),
                 operator: operator,
                 right: Box::new(right),
@@ -414,6 +429,7 @@ impl Parser {
             let operator = self.previous();
             let rhs = self.comparison()?;
             exp = expr::Expr::Binary {
+                id: self.get_id(),
                 left: Box::from(exp),
                 operator: operator,
                 right: Box::from(rhs),
@@ -434,6 +450,7 @@ impl Parser {
             let op = self.previous();
             let rhs = self.term()?;
             exp = expr::Expr::Binary {
+                id: self.get_id(),
                 left: Box::from(exp),
                 operator: op,
                 right: Box::from(rhs),
@@ -450,6 +467,7 @@ impl Parser {
             let op = self.previous();
             let rhs = self.factor()?;
             exp = expr::Expr::Binary {
+                id: self.get_id(),
                 left: Box::from(exp),
                 operator: op,
                 right: Box::from(rhs),
@@ -465,6 +483,7 @@ impl Parser {
             let op = self.previous();
             let rhs = self.unary()?;
             exp = expr::Expr::Binary {
+                id: self.get_id(),
                 left: Box::from(exp),
                 operator: op,
                 right: Box::from(rhs),
@@ -479,6 +498,7 @@ impl Parser {
             let op = self.previous();
             let rhs = self.unary()?;
             return Ok(expr::Expr::Unary {
+                id: self.get_id(),
                 operator: op,
                 right: Box::from(rhs),
             });
@@ -527,6 +547,7 @@ impl Parser {
         )?;
 
         return Ok(expr::Expr::Call {
+            id: self.get_id(),
             callee: Box::new(callee),
             paren,
             arguments,
@@ -543,6 +564,7 @@ impl Parser {
                 let exp = self.expression()?;
                 self.consume(scanner::TokenType::RightParen, "expected ')'")?;
                 result = expr::Expr::Grouping {
+                    id: self.get_id(),
                     expression: Box::from(exp),
                 };
             }
@@ -553,12 +575,14 @@ impl Parser {
             | scanner::TokenType::StringLit => {
                 self.advance();
                 result = expr::Expr::Literal {
+                    id: self.get_id(),
                     value: expr::LiteralValue::from_token(token),
                 };
             }
             scanner::TokenType::Identifier => {
                 self.advance();
                 result = expr::Expr::Variable {
+                    id: self.get_id(),
                     name: self.previous(),
                 };
             }

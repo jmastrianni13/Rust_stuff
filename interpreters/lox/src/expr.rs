@@ -202,40 +202,49 @@ impl std::cmp::Eq for Expr {}
 #[derive(Clone)]
 pub enum Expr {
     AnonFunction {
+        id: usize,
         paren: scanner::Token,
         arguments: Vec<scanner::Token>,
         body: Vec<Box<stmt::Stmt>>,
     },
     Assign {
+        id: usize,
         name: scanner::Token,
         value: Box<Expr>,
     },
     Binary {
+        id: usize,
         left: Box<Expr>,
         operator: scanner::Token,
         right: Box<Expr>,
     },
     Call {
+        id: usize,
         callee: Box<Expr>,
         paren: scanner::Token,
         arguments: Vec<Expr>,
     },
     Grouping {
+        id: usize,
         expression: Box<Expr>,
     },
     Literal {
+        id: usize,
         value: LiteralValue,
     },
     Logical {
+        id: usize,
         left: Box<Expr>,
         operator: scanner::Token,
         right: Box<Expr>,
     },
     Unary {
+        id: usize,
         operator: scanner::Token,
         right: Box<Expr>,
     },
     Variable {
+        id: usize,
         name: scanner::Token,
     },
 }
@@ -245,12 +254,14 @@ impl Expr {
     pub fn to_string(&self) -> String {
         match self {
             Expr::AnonFunction {
+                id: _,
                 paren: _,
                 arguments,
                 body: _,
             } => format!("anon/{}", arguments.len()),
-            Expr::Assign { name, value } => format!("({name:?} = {})", value.to_string()),
+            Expr::Assign { id: _, name, value } => format!("({name:?} = {})", value.to_string()),
             Expr::Binary {
+                id: _,
                 left,
                 operator,
                 right,
@@ -261,13 +272,17 @@ impl Expr {
                 right.to_string()
             ),
             Expr::Call {
+                id: _,
                 callee,
                 paren: _paren,
                 arguments,
             } => format!("({} {:?})", (*callee).to_string(), arguments),
-            Expr::Grouping { expression } => format!("(group {})", (*expression).to_string()),
-            Expr::Literal { value } => format!("{}", value.to_string()),
+            Expr::Grouping { id: _, expression } => {
+                format!("(group {})", (*expression).to_string())
+            }
+            Expr::Literal { id: _, value } => format!("{}", value.to_string()),
             Expr::Logical {
+                id: _,
                 left,
                 operator,
                 right,
@@ -277,12 +292,16 @@ impl Expr {
                 left.to_string(),
                 right.to_string()
             ),
-            Expr::Unary { operator, right } => {
+            Expr::Unary {
+                id: _,
+                operator,
+                right,
+            } => {
                 let operator_str = operator.lexeme.clone();
                 let right_str = (*right).to_string();
                 return format!("({} {})", operator_str, right_str);
             }
-            Expr::Variable { name } => format!("(var {})", name.lexeme),
+            Expr::Variable { id: _, name } => format!("(var {})", name.lexeme),
         }
     }
 
@@ -293,6 +312,7 @@ impl Expr {
     ) -> Result<LiteralValue, String> {
         match self {
             Expr::AnonFunction {
+                id: _,
                 paren,
                 arguments,
                 body,
@@ -332,7 +352,7 @@ impl Expr {
                     fun: Rc::new(fun_impl),
                 });
             }
-            Expr::Assign { name, value } => {
+            Expr::Assign { id: _, name, value } => {
                 let new_value = (*value).evaluate(env.clone(), distance)?;
                 let assign_success =
                     env.borrow_mut()
@@ -343,11 +363,12 @@ impl Expr {
                     return Err(format!("variable '{}' has not been declared", name.lexeme));
                 }
             }
-            Expr::Variable { name } => match env.borrow().get(&name.lexeme, distance) {
+            Expr::Variable { id: _, name } => match env.borrow().get(&name.lexeme, distance) {
                 Some(value) => Ok(value.clone()),
                 None => Err(format!("variable '{}' has not been declared", name.lexeme)),
             },
             Expr::Call {
+                id: _,
                 callee,
                 paren: _,
                 arguments,
@@ -373,8 +394,9 @@ impl Expr {
                     other => Err(format!("{} is not a callable", other.to_type())),
                 }
             }
-            Expr::Literal { value } => Ok((*value).clone()),
+            Expr::Literal { id: _, value } => Ok((*value).clone()),
             Expr::Logical {
+                id: _,
                 left,
                 operator,
                 right,
@@ -399,8 +421,12 @@ impl Expr {
                 }
                 ttype => Err(format!("Invalid token in logical expression: {}", ttype)),
             },
-            Expr::Grouping { expression } => expression.evaluate(env.clone(), distance),
-            Expr::Unary { operator, right } => {
+            Expr::Grouping { id: _, expression } => expression.evaluate(env.clone(), distance),
+            Expr::Unary {
+                id: _,
+                operator,
+                right,
+            } => {
                 let right = right.evaluate(env.clone(), distance)?;
 
                 match (&right, operator.token_type) {
@@ -416,6 +442,7 @@ impl Expr {
                 }
             }
             Expr::Binary {
+                id: _,
                 left,
                 operator,
                 right,
@@ -523,10 +550,13 @@ mod tests {
             line_number: 0,
         };
         let onetwothree = Box::from(Expr::Literal {
+            id: 0,
             value: LiteralValue::Number(123.0),
         });
         let group = Expr::Grouping {
+            id: 0,
             expression: Box::from(Expr::Literal {
+                id: 0,
                 value: LiteralValue::Number(45.67),
             }),
         };
@@ -538,7 +568,9 @@ mod tests {
         };
 
         let exp = Expr::Binary {
+            id: 0,
             left: Box::from(Expr::Unary {
+                id: 0,
                 operator: minus_token,
                 right: Box::from(onetwothree),
             }),
@@ -560,10 +592,13 @@ mod tests {
             line_number: 0,
         };
         let onetwothree = Box::from(Expr::Literal {
+            id: 0,
             value: LiteralValue::Number(123.0),
         });
         let group = Expr::Grouping {
+            id: 0,
             expression: Box::from(Expr::Literal {
+                id: 0,
                 value: LiteralValue::Number(45.67),
             }),
         };
@@ -575,7 +610,9 @@ mod tests {
         };
 
         let exp = Expr::Binary {
+            id: 0,
             left: Box::from(Expr::Unary {
+                id: 0,
                 operator: minus_token,
                 right: Box::from(onetwothree),
             }),
@@ -599,10 +636,13 @@ mod tests {
             line_number: 0,
         };
         let onetwothree = Box::from(Expr::Literal {
+            id: 0,
             value: LiteralValue::Number(123.0),
         });
         let group = Expr::Grouping {
+            id: 0,
             expression: Box::from(Expr::Literal {
+                id: 0,
                 value: LiteralValue::Number(45.67),
             }),
         };
@@ -614,7 +654,9 @@ mod tests {
         };
 
         let ast = Expr::Binary {
+            id: 0,
             left: Box::from(Expr::Unary {
+                id: 0,
                 operator: minus_token,
                 right: Box::from(onetwothree),
             }),
