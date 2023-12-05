@@ -92,8 +92,7 @@ fn run_prompt() -> Result<(), String> {
 
 fn run(interp: Rc<RefCell<interpreter::Interpreter>>, contents: &str) -> Result<(), String> {
     let mut scanner = scanner::Scanner::new(contents);
-    scanner.scan_tokens()?;
-    let tokens = scanner.tokens;
+    let tokens = scanner.scan_tokens()?;
 
     let mut parser = parser::Parser::new(tokens);
     let statements = parser.parse()?;
