@@ -554,9 +554,9 @@ mod tests {
             value: LiteralValue::Number(123.0),
         });
         let group = Expr::Grouping {
-            id: 0,
+            id: 1,
             expression: Box::from(Expr::Literal {
-                id: 0,
+                id: 2,
                 value: LiteralValue::Number(45.67),
             }),
         };
@@ -568,9 +568,9 @@ mod tests {
         };
 
         let exp = Expr::Binary {
-            id: 0,
+            id: 4,
             left: Box::from(Expr::Unary {
-                id: 0,
+                id: 5,
                 operator: minus_token,
                 right: Box::from(onetwothree),
             }),
@@ -592,13 +592,13 @@ mod tests {
             line_number: 0,
         };
         let onetwothree = Box::from(Expr::Literal {
-            id: 0,
+            id: 6,
             value: LiteralValue::Number(123.0),
         });
         let group = Expr::Grouping {
-            id: 0,
+            id: 7,
             expression: Box::from(Expr::Literal {
-                id: 0,
+                id: 8,
                 value: LiteralValue::Number(45.67),
             }),
         };
@@ -610,9 +610,9 @@ mod tests {
         };
 
         let exp = Expr::Binary {
-            id: 0,
+            id: 9,
             left: Box::from(Expr::Unary {
-                id: 0,
+                id: 10,
                 operator: minus_token,
                 right: Box::from(onetwothree),
             }),
@@ -636,13 +636,13 @@ mod tests {
             line_number: 0,
         };
         let onetwothree = Box::from(Expr::Literal {
-            id: 0,
+            id: 1,
             value: LiteralValue::Number(123.0),
         });
         let group = Expr::Grouping {
-            id: 0,
+            id: 2,
             expression: Box::from(Expr::Literal {
-                id: 0,
+                id: 3,
                 value: LiteralValue::Number(45.67),
             }),
         };
@@ -654,9 +654,9 @@ mod tests {
         };
 
         let ast = Expr::Binary {
-            id: 0,
+            id: 4,
             left: Box::from(Expr::Unary {
-                id: 0,
+                id: 5,
                 operator: minus_token,
                 right: Box::from(onetwothree),
             }),
