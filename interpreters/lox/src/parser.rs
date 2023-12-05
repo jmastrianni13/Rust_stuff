@@ -364,7 +364,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<expr::Expr, String> {
-        let exp = self.or()?;
+        let exp = self.pipe()?;
 
         if self.match_token(scanner::TokenType::Equal) {
             let value = self.expression()?;
@@ -382,6 +382,26 @@ impl Parser {
         } else {
             return Ok(exp);
         }
+    }
+
+    fn pipe(&mut self) -> Result<expr::Expr, String> {
+        // exp |> f
+        // exp |> f1 |> f2 |> ...
+        // exp |> fun(a) { return a + 1; }
+        // exp |> a -> a + 1
+        let mut exp = self.or()?;
+        while self.match_token(scanner::TokenType::Pipe) {
+            let pipe = self.previous();
+            let function = self.or()?;
+
+            exp = expr::Expr::Call {
+                id: self.get_id(),
+                callee: Box::new(function),
+                paren: pipe,
+                arguments: vec![exp],
+            }
+        }
+        return Ok(exp);
     }
 
     fn or(&mut self) -> Result<expr::Expr, String> {

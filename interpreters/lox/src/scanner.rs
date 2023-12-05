@@ -150,6 +150,13 @@ impl<'a> Scanner<'a> {
                     self.add_token(TokenType::Slash);
                 }
             }
+            '|' => {
+                if self.char_match('>') {
+                    self.add_token(TokenType::Pipe);
+                } else {
+                    return Err(format!("expected '>' at line {}", self.line));
+                }
+            }
             ' ' | '\r' | '\t' => {}
             '\n' => self.line += 1,
             '"' => self.string_lit()?,
@@ -329,6 +336,7 @@ pub enum TokenType {
     GreaterEqual,
     Less,
     LessEqual,
+    Pipe, // |>
 
     // literals
     Identifier,
