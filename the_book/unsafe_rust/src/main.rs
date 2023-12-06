@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::Add;
 use std::slice;
 
@@ -10,6 +11,7 @@ fn main() {
     demo_counter();
     demo_op_overload();
     demo_ambiguous_methods();
+    demo_supertraits();
 }
 
 fn demo_raw_pointers() {
@@ -217,4 +219,32 @@ fn demo_ambiguous_methods() {
 
     // because Animal does not take self, different syntax is required to call the method
     println!("A baby dog is called a {}", <Dog as Animal>::baby_name()); // <Type as Trait>::function()
+}
+
+trait OutlinePrint: fmt::Display {
+    // whatever implements this trait, must also implement Display
+    fn outline_print(&self) {
+        let output = self.to_string();
+        let len = output.len();
+        println!("{}", "*".repeat(len + 4));
+        println!("*{}*", " ".repeat(len + 2));
+        println!("* {} *", output);
+        println!("*{}*", " ".repeat(len + 2));
+        println!("{}", "*".repeat(len + 4));
+    }
+}
+
+impl fmt::Display for Point {
+    // required by OutlinePrint
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        return write!(f, "({}, {})", self.x, self.y);
+    }
+}
+
+impl OutlinePrint for Point {}
+
+fn demo_supertraits() {
+    let point = Point { x: 3, y: 4 };
+
+    point.outline_print();
 }
