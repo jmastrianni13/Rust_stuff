@@ -13,4 +13,4 @@ var a = "global";
 
 // --- Expected
 // "global"
-// "block"
+// "global"
