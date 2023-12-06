@@ -32,13 +32,17 @@ impl Resolver {
                 params: _,
                 body: _,
             } => self.resolve_function(stm)?,
-            stmt::Stmt::Expression { expression } => self.resolve_expr(expression, None)?,
+            stmt::Stmt::Expression { expression } => {
+                self.resolve_expr(expression, expression.get_id())?
+            }
             stmt::Stmt::IfStmt {
                 predicate: _,
                 then: _,
                 els: _,
             } => self.resolve_if_stmt(stm)?,
-            stmt::Stmt::Print { expression } => self.resolve_expr(expression, None)?,
+            stmt::Stmt::Print { expression } => {
+                self.resolve_expr(expression, expression.get_id())?
+            }
             stmt::Stmt::ReturnStmt {
                 keyword: _,
                 value: None,
@@ -46,9 +50,9 @@ impl Resolver {
             stmt::Stmt::ReturnStmt {
                 keyword: _,
                 value: Some(value),
-            } => self.resolve_expr(value, None)?,
+            } => self.resolve_expr(value, value.get_id())?,
             stmt::Stmt::WhileStmt { condition, body } => {
-                self.resolve_expr(condition, Some(condition.get_id()))?;
+                self.resolve_expr(condition, condition.get_id())?;
                 self.resolve(body.as_ref())?;
             }
         }
@@ -78,7 +82,7 @@ impl Resolver {
     fn resolve_var(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
         if let stmt::Stmt::Var { name, initializer } = stm {
             self.declare(name);
-            self.resolve_expr(initializer, Some(initializer.get_id()))?;
+            self.resolve_expr(initializer, initializer.get_id())?;
             self.define(name);
         } else {
             panic!("incorrect type in resolve var");
@@ -91,11 +95,8 @@ impl Resolver {
             self.declare(name);
             self.define(name);
 
-            return self.resolve_function_helper(
-                params,
-                &body.iter().map(|b| b.as_ref()).collect(),
-                None,
-            );
+            return self
+                .resolve_function_helper(params, &body.iter().map(|b| b.as_ref()).collect());
         } else {
             panic!("incorrect type in resolve function");
         }
@@ -105,7 +106,6 @@ impl Resolver {
         &mut self,
         params: &Vec<scanner::Token>,
         body: &Vec<&stmt::Stmt>,
-        _resolve_id: Option<usize>,
     ) -> Result<(), String> {
         self.begin_scope();
         for param in params {
@@ -125,7 +125,7 @@ impl Resolver {
             els,
         } = stm
         {
-            self.resolve_expr(predicate, None)?;
+            self.resolve_expr(predicate, predicate.get_id())?;
             self.resolve(then.as_ref())?;
             if let Some(els) = els {
                 self.resolve(els.as_ref())?;
@@ -163,7 +163,7 @@ impl Resolver {
         self.scopes[size - 1].insert(name.lexeme.clone(), true);
     }
 
-    fn resolve_expr(&mut self, exp: &expr::Expr, resolve_id: Option<usize>) -> Result<(), String> {
+    fn resolve_expr(&mut self, exp: &expr::Expr, resolve_id: usize) -> Result<(), String> {
         match exp {
             expr::Expr::Variable { id: _, name: _ } => self.resolve_expr_var(exp, resolve_id),
             expr::Expr::Assign {
@@ -182,19 +182,20 @@ impl Resolver {
             }
             expr::Expr::Call {
                 id: _,
-                callee: _,
+                callee,
                 paren: _,
                 arguments,
             } => {
-                // self.resolve_expr(callee.as_ref())?;
-                self.resolve_expr_var(&exp, resolve_id)?;
+                self.resolve_expr(callee.as_ref(), callee.get_id())?;
                 for arg in arguments {
-                    self.resolve_expr(arg, resolve_id)?;
+                    self.resolve_expr(arg, arg.get_id())?;
                 }
 
                 return Ok(());
             }
-            expr::Expr::Grouping { id: _, expression } => self.resolve_expr(expression, resolve_id),
+            expr::Expr::Grouping { id: _, expression } => {
+                self.resolve_expr(expression, expression.get_id())
+            }
             expr::Expr::Literal { id: _, value: _ } => Ok(()),
             expr::Expr::Logical {
                 id: _,
@@ -202,32 +203,26 @@ impl Resolver {
                 operator: _,
                 right,
             } => {
-                self.resolve_expr(left, resolve_id)?;
-                return self.resolve_expr(right, resolve_id);
+                self.resolve_expr(left, left.get_id())?;
+                return self.resolve_expr(right, right.get_id());
             }
             expr::Expr::Unary {
                 id: _,
                 operator: _,
                 right,
-            } => self.resolve_expr(right, resolve_id),
+            } => self.resolve_expr(right, right.get_id()),
             expr::Expr::AnonFunction {
                 id: _,
                 paren: _,
                 arguments,
                 body,
-            } => self.resolve_function_helper(
-                arguments,
-                &body.iter().map(|b| b.as_ref()).collect(),
-                resolve_id,
-            ),
+            } => {
+                self.resolve_function_helper(arguments, &body.iter().map(|b| b.as_ref()).collect())
+            }
         }
     }
 
-    fn resolve_expr_var(
-        &mut self,
-        exp: &expr::Expr,
-        resolve_id: Option<usize>,
-    ) -> Result<(), String> {
+    fn resolve_expr_var(&mut self, exp: &expr::Expr, resolve_id: usize) -> Result<(), String> {
         match exp {
             expr::Expr::Variable { id: _, name } => {
                 if !self.scopes.is_empty() {
@@ -235,7 +230,7 @@ impl Resolver {
                         return Err("cannot read local varaible in its own initializer".to_string());
                     }
                 }
-                return self.resolve_local(exp, name, resolve_id);
+                return self.resolve_local(name, resolve_id);
             }
             expr::Expr::Call {
                 id: _,
@@ -243,19 +238,14 @@ impl Resolver {
                 paren: _,
                 arguments: _,
             } => match callee.as_ref() {
-                expr::Expr::Variable { id: _, name } => self.resolve_local(exp, &name, resolve_id),
+                expr::Expr::Variable { id: _, name } => self.resolve_local(&name, resolve_id),
                 _ => panic!("incorrect type in resolve_expr_var"),
             },
             _ => panic!("incorrect type in resolve_expr_var"),
         }
     }
 
-    fn resolve_local(
-        &mut self,
-        exp: &expr::Expr,
-        name: &scanner::Token,
-        resolve_id: Option<usize>,
-    ) -> Result<(), String> {
+    fn resolve_local(&mut self, name: &scanner::Token, resolve_id: usize) -> Result<(), String> {
         let size = self.scopes.len();
         if size == 0 {
             return Ok(());
@@ -264,25 +254,17 @@ impl Resolver {
         for i in (0..=(size - 1)).rev() {
             let scope = &self.scopes[i];
             if scope.contains_key(&name.lexeme) {
-                let id_to_use = match resolve_id {
-                    None => exp.get_id(),
-                    Some(id) => id,
-                };
-                self.interp.borrow_mut().resolve(id_to_use, size - 1 - i)?;
+                self.interp.borrow_mut().resolve(resolve_id, size - 1 - i)?;
                 return Ok(());
             }
         }
         return Ok(()); // assume it's global
     }
 
-    fn resolve_expr_assign(
-        &mut self,
-        exp: &expr::Expr,
-        resolve_id: Option<usize>,
-    ) -> Result<(), String> {
+    fn resolve_expr_assign(&mut self, exp: &expr::Expr, resolve_id: usize) -> Result<(), String> {
         if let expr::Expr::Assign { id: _, name, value } = exp {
-            self.resolve_expr(value.as_ref(), resolve_id)?;
-            self.resolve_local(exp, name, resolve_id)?;
+            self.resolve_expr(value.as_ref(), value.get_id())?;
+            self.resolve_local(name, resolve_id)?;
         } else {
             panic!("incorrect type in resolve assign");
         }
