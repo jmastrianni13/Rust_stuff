@@ -165,12 +165,12 @@ impl Resolver {
 
     fn resolve_expr(&mut self, exp: &expr::Expr, resolve_id: usize) -> Result<(), String> {
         match exp {
-            expr::Expr::Variable { id: _, name: _ } => self.resolve_expr_var(exp, resolve_id),
+            expr::Expr::Variable { id: _, name: _ } => self.resolve_expr_var(exp, exp.get_id()),
             expr::Expr::Assign {
                 id: _,
                 name: _,
                 value: _,
-            } => self.resolve_expr_assign(exp, resolve_id),
+            } => self.resolve_expr_assign(exp, exp.get_id()),
             expr::Expr::Binary {
                 id: _,
                 left,
