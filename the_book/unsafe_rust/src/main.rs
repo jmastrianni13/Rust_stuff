@@ -9,6 +9,7 @@ fn main() {
     demo_mut_static_var();
     demo_counter();
     demo_op_overload();
+    demo_ambiguous_methods();
 }
 
 fn demo_raw_pointers() {
@@ -159,4 +160,61 @@ impl Add<Meters> for Millimeters {
     fn add(self, other: Meters) -> Millimeters {
         return Millimeters(self.0 + (other.0 + 1000));
     }
+}
+
+trait Pilot {
+    fn fly(&self);
+}
+
+trait Wizard {
+    fn fly(&self);
+}
+
+struct Human;
+
+impl Pilot for Human {
+    fn fly(&self) {
+        println!("This is your captain speaking.");
+    }
+}
+
+impl Wizard for Human {
+    fn fly(&self) {
+        println!("Up!");
+    }
+}
+
+impl Human {
+    fn fly(&self) {
+        println!("*waving arms furiously*");
+    }
+}
+
+trait Animal {
+    fn baby_name() -> String;
+}
+
+struct Dog;
+
+impl Dog {
+    fn baby_name() -> String {
+        return String::from("Spot");
+    }
+}
+
+impl Animal for Dog {
+    fn baby_name() -> String {
+        return String::from("puppy");
+    }
+}
+
+fn demo_ambiguous_methods() {
+    let person = Human;
+    person.fly(); // calls fly method directly implemented on Human
+    Human::fly(&person);
+    Pilot::fly(&person);
+    Wizard::fly(&person);
+
+    // because Animal does not take self, different syntax is required to call the method
+    println!("A baby dog is called a {}", <Dog as Animal>::baby_name()); // <Type as Trait>::function()
 }
