@@ -7,6 +7,7 @@ mod tests {
     fn execute_tests() {
         let cases = read_dir("./src/tests/cases").unwrap();
 
+        let mut msgs = vec![];
         let mut errors = vec![];
         for case in cases {
             let case = case.unwrap();
@@ -16,9 +17,20 @@ mod tests {
                 continue;
             }
             match run_test(case) {
-                Ok(_) => (),
-                Err(msg) => errors.push(msg),
+                Ok(_) => {
+                    msgs.push(format!("Running {name:.<85}...ok"));
+                }
+                Err(msg) => {
+                    errors.push(msg);
+                    msgs.push(format!("Running {name:.<85}...failed"));
+                }
             }
+        }
+
+        println!("Ran {} tests", msgs.len());
+        msgs.sort();
+        for msg in msgs {
+            println!("{msg}");
         }
 
         if errors.len() > 0 {
