@@ -6,6 +6,7 @@ fn main() {
     demo_unsafe_abstraction();
     demo_extern();
     demo_mut_static_var();
+    demo_counter();
 }
 
 fn demo_raw_pointers() {
@@ -50,7 +51,7 @@ fn demo_unsafe_abstraction() {
             return (
                 slice::from_raw_parts_mut(ptr, mid),
                 slice::from_raw_parts_mut(ptr.add(mid), len - mid),
-                );
+            );
         }
     }
 
@@ -58,7 +59,6 @@ fn demo_unsafe_abstraction() {
     let (left, right) = split_at_mut(&mut v, 3);
     println!("left of split: {:?}", left);
     println!("right of split: {:?}", right);
-
 }
 
 extern "C" {
@@ -84,5 +84,40 @@ fn demo_mut_static_var() {
 
     unsafe {
         println!("COUNTER: {}", COUNTER);
+    }
+}
+
+struct Counter {
+    count: u32,
+}
+
+impl Counter {
+    fn new() -> Counter {
+        return Counter { count: 0 };
+    }
+}
+
+impl Iterator for Counter {
+    type Item = u32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.count < 5 {
+            self.count += 1;
+            return Some(self.count);
+        } else {
+            return None;
+        }
+    }
+}
+
+fn demo_counter() {
+    let mut counter = Counter::new();
+    let mut c;
+    loop {
+        c = counter.next();
+        match c {
+            None => break,
+            _ => println!("{}", c.unwrap()),
+        }
     }
 }
