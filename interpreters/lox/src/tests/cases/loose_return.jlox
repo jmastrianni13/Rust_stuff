@@ -1,0 +1,6 @@
+// --- Test
+return 123;
+
+
+// --- Expected
+// ERROR: return statement is not allowed outside of a function
