@@ -21,14 +21,17 @@ impl Interpreter {
         };
     }
 
-    fn for_closure(parent: Rc<RefCell<environment::Environment>>) -> Self {
+    fn for_closure(
+        parent: Rc<RefCell<environment::Environment>>,
+        locals: Rc<RefCell<HashMap<usize, usize>>>,
+    ) -> Self {
         let environment = Rc::new(RefCell::new(environment::Environment::new()));
         environment.borrow_mut().enclosing = Some(parent);
 
         return Self {
             specials: Rc::new(RefCell::new(HashMap::new())),
             environment,
-            locals: Rc::new(RefCell::new(HashMap::new())),
+            locals: locals,
         };
     }
 
@@ -108,8 +111,10 @@ impl Interpreter {
                     let name_clone = name.lexeme.clone();
 
                     let parent_env = self.environment.clone();
+                    let parent_locals = self.locals.clone();
                     let fun_impl = move |args: &Vec<expr::LiteralValue>| {
-                        let mut clos_int = Interpreter::for_closure(parent_env.clone());
+                        let mut clos_int =
+                            Interpreter::for_closure(parent_env.clone(), parent_locals.clone());
 
                         for (i, arg) in args.iter().enumerate() {
                             clos_int
@@ -159,14 +164,13 @@ impl Interpreter {
         return Ok(());
     }
 
-    pub fn resolve(&mut self, exp: &expr::Expr, steps: usize) -> Result<(), String> {
-        let addr = std::ptr::addr_of!(exp) as usize;
-        self.locals.borrow_mut().insert(addr, steps);
+    pub fn resolve(&mut self, id: usize, steps: usize) -> Result<(), String> {
+        self.locals.borrow_mut().insert(id, steps);
         return Ok(());
     }
 
     pub fn get_distance(&mut self, exp: &expr::Expr) -> Option<usize> {
-        let addr = std::ptr::addr_of!(exp) as usize;
-        return self.locals.borrow().get(&addr).copied();
+        let dist = self.locals.borrow().get(&exp.get_id()).copied();
+        return dist;
     }
 }
