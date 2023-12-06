@@ -49,7 +49,7 @@ impl Resolver {
             stmt::Stmt::Print { expression } => self.resolve_expr(expression)?,
             stmt::Stmt::ReturnStmt { keyword: _, value } => {
                 if self.current_function == FunctionType::None {
-                    return Err("return statement not allowed outside of a function".to_string());
+                    return Err("return statement is not allowed outside of a function".to_string());
                 }
 
                 if let Some(value) = value {
@@ -230,7 +230,14 @@ impl Resolver {
                 arguments,
                 body,
             } => {
-                self.resolve_function_helper(arguments, &body.iter().map(|b| b.as_ref()).collect())
+                let enclosing_function = self.current_function;
+                self.current_function = FunctionType::Function;
+                self.resolve_function_helper(
+                    arguments,
+                    &body.iter().map(|b| b.as_ref()).collect(),
+                )?;
+                self.current_function = enclosing_function;
+                return Ok(());
             }
         }
     }
