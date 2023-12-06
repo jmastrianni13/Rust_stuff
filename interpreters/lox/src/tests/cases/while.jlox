@@ -1,4 +1,4 @@
---- Test
+// --- Test
 var a = 2;
 while (a) {
   a = a - 1;
@@ -6,6 +6,6 @@ while (a) {
 }
 
 
---- Expected
-1
-0
+// --- Expected
+// 1
+// 0

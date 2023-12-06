@@ -1,4 +1,4 @@
---- Test
+// --- Test
 var a = 2;
 fun fn() {
   return a;
@@ -11,5 +11,5 @@ fun fn() {
 }
 
 
---- Expected
-2
+// --- Expected
+// 2

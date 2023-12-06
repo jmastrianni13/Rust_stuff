@@ -1,8 +1,8 @@
---- Test
+// --- Test
 
 var a = clock();
 
 print a - a;
 
---- Expected
-0
+// --- Expected
+// 0
