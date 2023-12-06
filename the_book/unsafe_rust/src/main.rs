@@ -1,3 +1,4 @@
+use std::ops::Add;
 use std::slice;
 
 fn main() {
@@ -7,6 +8,7 @@ fn main() {
     demo_extern();
     demo_mut_static_var();
     demo_counter();
+    demo_op_overload();
 }
 
 fn demo_raw_pointers() {
@@ -119,5 +121,42 @@ fn demo_counter() {
             None => break,
             _ => println!("{}", c.unwrap()),
         }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Add for Point {
+    type Output = Point;
+
+    fn add(self, other: Point) -> Point {
+        return Point {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        };
+    }
+}
+
+fn demo_op_overload() {
+    let p1 = Point { x: 1, y: 0 };
+    let p2 = Point { x: 2, y: 3 };
+
+    let p3 = p1 + p2;
+
+    assert_eq!(p3, Point { x: 3, y: 3 });
+}
+
+struct Millimeters(u32);
+struct Meters(u32);
+
+impl Add<Meters> for Millimeters {
+    type Output = Millimeters;
+
+    fn add(self, other: Meters) -> Millimeters {
+        return Millimeters(self.0 + (other.0 + 1000));
     }
 }
