@@ -250,6 +250,48 @@ pub enum Expr {
 }
 
 impl Expr {
+    pub fn get_id(&self) -> usize {
+        match self {
+            Expr::AnonFunction {
+                id,
+                paren: _,
+                arguments: _,
+                body: _,
+            } => *id,
+            Expr::Assign {
+                id,
+                name: _,
+                value: _,
+            } => *id,
+            Expr::Binary {
+                id,
+                left: _,
+                operator: _,
+                right: _,
+            } => *id,
+            Expr::Call {
+                id,
+                callee: _,
+                paren: _,
+                arguments: _,
+            } => *id,
+            Expr::Grouping { id, expression: _ } => *id,
+            Expr::Literal { id, value: _ } => *id,
+            Expr::Logical {
+                id,
+                left: _,
+                operator: _,
+                right: _,
+            } => *id,
+            Expr::Unary {
+                id,
+                operator: _,
+                right: _,
+            } => *id,
+            Expr::Variable { id, name: _ } => *id,
+        }
+    }
+
     #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         match self {
