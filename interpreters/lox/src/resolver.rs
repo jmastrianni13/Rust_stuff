@@ -77,7 +77,7 @@ impl Resolver {
 
     fn resolve_var(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
         if let stmt::Stmt::Var { name, initializer } = stm {
-            self.declare(name);
+            self.declare(name)?;
             self.resolve_expr(initializer)?;
             self.define(name);
         } else {
@@ -88,7 +88,7 @@ impl Resolver {
 
     fn resolve_function(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
         if let stmt::Stmt::Function { name, params, body } = stm {
-            self.declare(name);
+            self.declare(name)?;
             self.define(name);
 
             return self
@@ -105,7 +105,7 @@ impl Resolver {
     ) -> Result<(), String> {
         self.begin_scope();
         for param in params {
-            self.declare(param);
+            self.declare(param)?;
             self.define(param);
         }
         self.resolve_many(body)?;
@@ -141,13 +141,19 @@ impl Resolver {
         self.scopes.pop().expect("stack underflow in scope");
     }
 
-    fn declare(&mut self, name: &scanner::Token) {
+    fn declare(&mut self, name: &scanner::Token) -> Result<(), String> {
         let size = self.scopes.len();
         if self.scopes.is_empty() {
-            return; // scopes vec is empty, must be in global scope so do nothing
+            return Ok(()); // scopes vec is empty, must be in global scope so do nothing
+        }
+
+        if self.scopes[size - 1].contains_key(&name.lexeme.clone()) {
+            return Err("a variable with this name is already in scope".to_string());
         }
 
         self.scopes[size - 1].insert(name.lexeme.clone(), false);
+
+        return Ok(());
     }
 
     fn define(&mut self, name: &scanner::Token) {
