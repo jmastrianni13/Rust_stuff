@@ -6,10 +6,17 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+#[derive(Clone, Copy, PartialEq)]
+enum FunctionType {
+    None,
+    Function,
+}
+
 #[allow(dead_code)]
 pub struct Resolver {
     pub interp: Rc<RefCell<interpreter::Interpreter>>,
     scopes: Vec<HashMap<String, bool>>,
+    current_function: FunctionType,
 }
 
 impl Resolver {
@@ -17,6 +24,7 @@ impl Resolver {
         return Self {
             interp,
             scopes: vec![],
+            current_function: FunctionType::None,
         };
     }
 
@@ -39,14 +47,15 @@ impl Resolver {
                 els: _,
             } => self.resolve_if_stmt(stm)?,
             stmt::Stmt::Print { expression } => self.resolve_expr(expression)?,
-            stmt::Stmt::ReturnStmt {
-                keyword: _,
-                value: None,
-            } => (),
-            stmt::Stmt::ReturnStmt {
-                keyword: _,
-                value: Some(value),
-            } => self.resolve_expr(value)?,
+            stmt::Stmt::ReturnStmt { keyword: _, value } => {
+                if self.current_function == FunctionType::None {
+                    return Err("return statement not allowed outside of a function".to_string());
+                }
+
+                if let Some(value) = value {
+                    self.resolve_expr(value)?;
+                }
+            }
             stmt::Stmt::WhileStmt { condition, body } => {
                 self.resolve_expr(condition)?;
                 self.resolve(body.as_ref())?;
@@ -88,11 +97,15 @@ impl Resolver {
 
     fn resolve_function(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
         if let stmt::Stmt::Function { name, params, body } = stm {
+            let enclosing_function = self.current_function;
+            self.current_function = FunctionType::Function;
             self.declare(name)?;
             self.define(name);
 
-            return self
-                .resolve_function_helper(params, &body.iter().map(|b| b.as_ref()).collect());
+            self.resolve_function_helper(params, &body.iter().map(|b| b.as_ref()).collect());
+
+            self.current_function = enclosing_function;
+            return Ok(());
         } else {
             panic!("incorrect type in resolve function");
         }
