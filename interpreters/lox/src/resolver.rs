@@ -97,15 +97,14 @@ impl Resolver {
 
     fn resolve_function(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
         if let stmt::Stmt::Function { name, params, body } = stm {
-            let enclosing_function = self.current_function;
-            self.current_function = FunctionType::Function;
             self.declare(name)?;
             self.define(name);
 
-            self.resolve_function_helper(params, &body.iter().map(|b| b.as_ref()).collect());
-
-            self.current_function = enclosing_function;
-            return Ok(());
+            self.resolve_function_helper(
+                params,
+                &body.iter().map(|b| b.as_ref()).collect(),
+                FunctionType::Function,
+            )
         } else {
             panic!("incorrect type in resolve function");
         }
@@ -115,7 +114,10 @@ impl Resolver {
         &mut self,
         params: &Vec<scanner::Token>,
         body: &Vec<&stmt::Stmt>,
+        resolving_function: FunctionType,
     ) -> Result<(), String> {
+        let enclosing_function = self.current_function;
+        self.current_function = resolving_function;
         self.begin_scope();
         for param in params {
             self.declare(param)?;
@@ -123,6 +125,8 @@ impl Resolver {
         }
         self.resolve_many(body)?;
         self.end_scope();
+
+        self.current_function = enclosing_function;
 
         return Ok(());
     }
@@ -229,16 +233,11 @@ impl Resolver {
                 paren: _,
                 arguments,
                 body,
-            } => {
-                let enclosing_function = self.current_function;
-                self.current_function = FunctionType::Function;
-                self.resolve_function_helper(
-                    arguments,
-                    &body.iter().map(|b| b.as_ref()).collect(),
-                )?;
-                self.current_function = enclosing_function;
-                return Ok(());
-            }
+            } => self.resolve_function_helper(
+                arguments,
+                &body.iter().map(|b| b.as_ref()).collect(),
+                FunctionType::Function,
+            ),
         }
     }
 
