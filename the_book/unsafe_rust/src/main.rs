@@ -13,6 +13,7 @@ fn main() {
     demo_ambiguous_methods();
     demo_supertraits();
     demo_type_alias();
+    demo_function_pointers();
 }
 
 fn demo_raw_pointers() {
@@ -255,4 +256,17 @@ fn demo_type_alias() {
     let x: i32 = 5;
     let y: Kilometers = 10;
     println!("x + y = {}", x + y);
+}
+
+fn add_one(x: i32) -> i32 {
+    return x + 1;
+}
+
+fn do_twice(f: fn(i32) -> i32, arg: i32) -> i32 {
+    return f(arg) + f(arg);
+}
+
+fn demo_function_pointers() {
+    let answer = do_twice(add_one, 5);
+    println!("The answer is: {answer}");
 }
