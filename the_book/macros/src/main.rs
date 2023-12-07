@@ -1,5 +1,10 @@
+mod hello_macro;
+use hello_macro::HelloMacro;
+use macros::HelloMacro;
+
 fn main() {
     demo_my_vec();
+    Pancakes::hello_macro();
 }
 
 #[macro_export]
@@ -19,3 +24,6 @@ fn demo_my_vec() {
     let v = my_vec![1, 2, 3];
     println!("{:?}", v);
 }
+
+#[derive(HelloMacro)]
+struct Pancakes;
