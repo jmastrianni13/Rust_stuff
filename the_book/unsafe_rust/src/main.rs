@@ -12,6 +12,7 @@ fn main() {
     demo_op_overload();
     demo_ambiguous_methods();
     demo_supertraits();
+    demo_type_alias();
 }
 
 fn demo_raw_pointers() {
@@ -247,4 +248,11 @@ fn demo_supertraits() {
     let point = Point { x: 3, y: 4 };
 
     point.outline_print();
+}
+
+fn demo_type_alias() {
+    type Kilometers = i32;
+    let x: i32 = 5;
+    let y: Kilometers = 10;
+    println!("x + y = {}", x + y);
 }
