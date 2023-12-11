@@ -6,6 +6,18 @@ pub struct ThreadPool {
     sender: sync::mpsc::Sender<Job>,
 }
 
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        for worker in &mut self.workers {
+            println!("shutting down worker {}", worker.id);
+
+            if let Some(w_thread) = worker.w_thread.take() {
+                w_thread.join().unwrap();
+            }
+        }
+    }
+}
+
 impl ThreadPool {
     // Create a new ThreadPool.
     //
@@ -42,7 +54,7 @@ impl ThreadPool {
 
 struct Worker {
     id: usize,
-    w_thread: thread::JoinHandle<()>,
+    w_thread: Option<thread::JoinHandle<()>>,
 }
 
 impl Worker {
@@ -55,7 +67,10 @@ impl Worker {
             job();
         });
 
-        return Worker { id, w_thread };
+        return Worker {
+            id,
+            w_thread: Some(w_thread),
+        };
     }
 }
 
