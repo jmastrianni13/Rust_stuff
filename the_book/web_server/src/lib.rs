@@ -3,11 +3,13 @@ use std::thread;
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
-    sender: sync::mpsc::Sender<Job>,
+    sender: Option<sync::mpsc::Sender<Job>>,
 }
 
 impl Drop for ThreadPool {
     fn drop(&mut self) {
+        drop(self.sender.take());
+
         for worker in &mut self.workers {
             println!("shutting down worker {}", worker.id);
 
@@ -39,7 +41,10 @@ impl ThreadPool {
             workers.push(Worker::new(id, sync::Arc::clone(&receiver)));
         }
 
-        return ThreadPool { workers, sender };
+        return ThreadPool {
+            workers,
+            sender: Some(sender),
+        };
     }
 
     pub fn execute<F>(&self, f: F)
@@ -48,7 +53,7 @@ impl ThreadPool {
     {
         let job = Box::new(f);
 
-        self.sender.send(job).unwrap();
+        self.sender.as_ref().unwrap().send(job).unwrap();
     }
 }
 
@@ -60,11 +65,19 @@ struct Worker {
 impl Worker {
     fn new(id: usize, receiver: sync::Arc<sync::Mutex<sync::mpsc::Receiver<Job>>>) -> Worker {
         let w_thread = thread::spawn(move || loop {
-            let job = receiver.lock().unwrap().recv().unwrap();
+            let msg = receiver.lock().unwrap().recv();
 
-            println!("> worker {id} got a job; executing.");
+            match msg {
+                Ok(job) => {
+                    println!("> worker {id} got a job; executing.");
 
-            job();
+                    job();
+                }
+                Err(_) => {
+                    println!("> worker {id} disconnected; shutting down");
+                    break;
+                }
+            }
         });
 
         return Worker {
