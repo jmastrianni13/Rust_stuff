@@ -5,6 +5,7 @@ use crate::stmt;
 #[derive(Debug)]
 enum FunctionKind {
     Function,
+    Method,
 }
 
 #[derive(Debug)]
@@ -57,9 +58,35 @@ impl Parser {
             return self.var_declaration();
         } else if self.match_token(scanner::TokenType::Fun) {
             self.function(FunctionKind::Function)
+        } else if self.match_token(scanner::TokenType::Class) {
+            self.class_declaration()
         } else {
             return self.statement();
         }
+    }
+
+    fn class_declaration(&mut self) -> Result<stmt::Stmt, String> {
+        let name = self.consume(
+            scanner::TokenType::Identifier,
+            "expected name after 'class' keyword",
+        )?;
+        self.consume(
+            scanner::TokenType::LeftBrace,
+            "expected '{' before class body",
+        )?;
+
+        let mut methods = vec![];
+        while !self.check(scanner::TokenType::RightBrace) && !self.is_at_end() {
+            let method = self.function(FunctionKind::Method)?;
+            methods.push(Box::new(method));
+        }
+
+        self.consume(
+            scanner::TokenType::RightBrace,
+            "expected '}' after class body",
+        )?;
+
+        return Ok(stmt::Stmt::Class { name, methods });
     }
 
     fn function(&mut self, kind: FunctionKind) -> Result<stmt::Stmt, String> {

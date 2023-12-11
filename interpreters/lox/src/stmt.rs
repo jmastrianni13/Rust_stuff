@@ -16,6 +16,10 @@ pub enum Stmt {
     Block {
         statements: Vec<Box<Stmt>>,
     },
+    Class {
+        name: scanner::Token,
+        methods: Vec<Box<Stmt>>,
+    },
     IfStmt {
         predicate: expr::Expr,
         then: Box<Stmt>,
