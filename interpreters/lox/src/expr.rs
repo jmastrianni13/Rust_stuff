@@ -33,6 +33,10 @@ pub enum LiteralValue {
         arity: usize,
         fun: Rc<dyn Fn(&Vec<LiteralValue>) -> LiteralValue>,
     },
+    LoxClass {
+        name: String,
+        // methods: Vec<(String, LiteralValue)>,
+    },
 }
 
 impl std::fmt::Debug for LiteralValue {
@@ -78,6 +82,7 @@ impl LiteralValue {
                 arity,
                 fun: _,
             } => format!("{name}/{arity}"),
+            LiteralValue::LoxClass { name } => format!("class '{name}'"),
         }
     }
 
@@ -93,6 +98,7 @@ impl LiteralValue {
                 arity: _,
                 fun: _,
             } => "Callable",
+            LiteralValue::LoxClass { name: _ } => "Class",
         }
     }
 
@@ -144,6 +150,7 @@ impl LiteralValue {
             } => {
                 panic!("cannot use callable as a falsy value")
             }
+            LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a falsy value"),
         }
     }
 
@@ -173,6 +180,7 @@ impl LiteralValue {
             } => {
                 panic!("cannot use callable as a truthy value")
             }
+            LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a truthy value"),
         }
     }
 }

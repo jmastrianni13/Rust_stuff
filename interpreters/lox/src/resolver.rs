@@ -35,6 +35,10 @@ impl Resolver {
                 name: _,
                 initializer: _,
             } => self.resolve_var(stm)?,
+            stmt::Stmt::Class { name, methods: _ } => {
+                self.declare(name)?;
+                self.define(name);
+            }
             stmt::Stmt::Function {
                 name: _,
                 params: _,

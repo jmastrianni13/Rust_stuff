@@ -79,6 +79,21 @@ impl Interpreter {
 
                     block_result?; // compiler complains if return keyword is used here
                 }
+                stmt::Stmt::Class { name, methods: _ } => {
+                    self.environment
+                        .borrow_mut()
+                        .define(name.lexeme.clone(), expr::LiteralValue::Nil);
+                    let klass = expr::LiteralValue::LoxClass {
+                        name: name.lexeme.clone(),
+                    };
+                    if !self
+                        .environment
+                        .borrow_mut()
+                        .assign(&name.lexeme, klass, None)
+                    {
+                        return Err(format!("class definition failed for {}", name.lexeme));
+                    }
+                }
                 stmt::Stmt::IfStmt {
                     predicate,
                     then,
