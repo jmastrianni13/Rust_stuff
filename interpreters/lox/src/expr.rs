@@ -35,7 +35,11 @@ pub enum LiteralValue {
     },
     LoxClass {
         name: String,
-        // methods: Vec<(String, LiteralValue)>,
+        // methods: Vec<(String, LiteralValue)>, // TODO Could also add static fields?
+    },
+    LoxInstance {
+        class_name: String,
+        //fields: Vec<(String, LiteralValue)>,
     },
 }
 
@@ -83,6 +87,7 @@ impl LiteralValue {
                 fun: _,
             } => format!("{name}/{arity}"),
             LiteralValue::LoxClass { name } => format!("class '{name}'"),
+            LiteralValue::LoxInstance { class_name } => format!("instance of '{class_name}'"),
         }
     }
 
@@ -99,6 +104,7 @@ impl LiteralValue {
                 fun: _,
             } => "Callable",
             LiteralValue::LoxClass { name: _ } => "Class",
+            LiteralValue::LoxInstance { class_name: _ } => "Instance",
         }
     }
 
@@ -151,6 +157,9 @@ impl LiteralValue {
                 panic!("cannot use callable as a falsy value")
             }
             LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a falsy value"),
+            LiteralValue::LoxInstance { class_name: _ } => {
+                panic!("cannot use class instance as a falsy value")
+            }
         }
     }
 
@@ -181,6 +190,9 @@ impl LiteralValue {
                 panic!("cannot use callable as a truthy value")
             }
             LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a truthy value"),
+            LiteralValue::LoxInstance { class_name: _ } => {
+                panic!("cannot use class instance as a truthy value")
+            }
         }
     }
 }
@@ -430,7 +442,7 @@ impl Expr {
                 paren: _,
                 arguments,
             } => {
-                let callable = (*callee).evaluate(env.clone(), locals.clone())?;
+                let callable: LiteralValue = (*callee).evaluate(env.clone(), locals.clone())?;
                 match callable {
                     LiteralValue::Callable { name, arity, fun } => {
                         if arguments.len() != arity {
@@ -448,6 +460,9 @@ impl Expr {
                         }
                         return Ok(fun(&arg_vals));
                     }
+                    LiteralValue::LoxClass { name } => Ok(LiteralValue::LoxInstance {
+                        class_name: name.clone(),
+                    }),
                     other => Err(format!("{} is not a callable", other.to_type())),
                 }
             }
