@@ -38,7 +38,7 @@ pub enum LiteralValue {
         // methods: Vec<(String, LiteralValue)>, // TODO Could also add static fields?
     },
     LoxInstance {
-        class_name: String,
+        class: Box<LiteralValue>,
         //fields: Vec<(String, LiteralValue)>,
     },
 }
@@ -73,6 +73,16 @@ impl PartialEq for LiteralValue {
     }
 }
 
+macro_rules! class_name {
+    ($class:expr) => {{
+        if let LiteralValue::LoxClass { name } = &**$class {
+            name
+        } else {
+            panic!("unreachable")
+        }
+    }};
+}
+
 impl LiteralValue {
     pub fn to_string(&self) -> String {
         match self {
@@ -87,7 +97,9 @@ impl LiteralValue {
                 fun: _,
             } => format!("{name}/{arity}"),
             LiteralValue::LoxClass { name } => format!("class '{name}'"),
-            LiteralValue::LoxInstance { class_name } => format!("instance of '{class_name}'"),
+            LiteralValue::LoxInstance { class } => {
+                format!("instance of '{}'", class_name!(class))
+            }
         }
     }
 
@@ -104,7 +116,7 @@ impl LiteralValue {
                 fun: _,
             } => "Callable",
             LiteralValue::LoxClass { name: _ } => "Class",
-            LiteralValue::LoxInstance { class_name: _ } => "Instance",
+            LiteralValue::LoxInstance { class } => &class_name!(class),
         }
     }
 
@@ -157,7 +169,7 @@ impl LiteralValue {
                 panic!("cannot use callable as a falsy value")
             }
             LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a falsy value"),
-            LiteralValue::LoxInstance { class_name: _ } => {
+            LiteralValue::LoxInstance { class: _ } => {
                 panic!("cannot use class instance as a falsy value")
             }
         }
@@ -190,7 +202,7 @@ impl LiteralValue {
                 panic!("cannot use callable as a truthy value")
             }
             LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a truthy value"),
-            LiteralValue::LoxInstance { class_name: _ } => {
+            LiteralValue::LoxInstance { class: _ } => {
                 panic!("cannot use class instance as a truthy value")
             }
         }
@@ -460,9 +472,16 @@ impl Expr {
                         }
                         return Ok(fun(&arg_vals));
                     }
-                    LiteralValue::LoxClass { name } => Ok(LiteralValue::LoxInstance {
-                        class_name: name.clone(),
-                    }),
+                    LiteralValue::LoxClass { name: _ } => {
+                        if arguments.len() != 0 {
+                            return Err(
+                                "can only call the constructor with zero arguments".to_string()
+                            );
+                        }
+                        return Ok(LiteralValue::LoxInstance {
+                            class: Box::new(callable.clone()),
+                        });
+                    }
                     other => Err(format!("{} is not a callable", other.to_type())),
                 }
             }
