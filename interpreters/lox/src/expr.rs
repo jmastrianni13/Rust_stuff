@@ -263,6 +263,11 @@ pub enum Expr {
         paren: scanner::Token,
         arguments: Vec<Expr>,
     },
+    Get {
+        id: usize,
+        object: Box<Expr>,
+        name: scanner::Token,
+    },
     Grouping {
         id: usize,
         expression: Box<Expr>,
@@ -314,6 +319,11 @@ impl Expr {
                 paren: _,
                 arguments: _,
             } => *id,
+            Expr::Get {
+                id,
+                object: _,
+                name: _,
+            } => *id,
             Expr::Grouping { id, expression: _ } => *id,
             Expr::Literal { id, value: _ } => *id,
             Expr::Logical {
@@ -358,6 +368,11 @@ impl Expr {
                 paren: _paren,
                 arguments,
             } => format!("({} {:?})", (*callee).to_string(), arguments),
+            Expr::Get {
+                id: _,
+                object,
+                name,
+            } => format!("(get {} {})", object.to_string(), name.lexeme),
             Expr::Grouping { id: _, expression } => {
                 format!("(group {})", (*expression).to_string())
             }
@@ -519,6 +534,27 @@ impl Expr {
                 }
                 ttype => Err(format!("Invalid token in logical expression: {}", ttype)),
             },
+            Expr::Get {
+                id: _,
+                object,
+                name,
+            } => {
+                let obj_value = object.evaluate(env.clone(), locals.clone())?;
+                // obj_value should be a LoxInstance
+                if let LiteralValue::LoxInstance { class: _, fields } = obj_value {
+                    for (field_name, value) in fields {
+                        if field_name == name.lexeme {
+                            return Ok(value);
+                        }
+                    }
+                    Err(format!("no field named {} on this instance", name.lexeme))
+                } else {
+                    Err(format!(
+                        "cannot access property on type {}",
+                        obj_value.to_type()
+                    ))
+                }
+            }
             Expr::Grouping { id: _, expression } => {
                 expression.evaluate(env.clone(), locals.clone())
             }

@@ -560,6 +560,16 @@ impl Parser {
         loop {
             if self.match_token(scanner::TokenType::LeftParen) {
                 exp = self.finish_call(exp)?;
+            } else if self.match_token(scanner::TokenType::Dot) {
+                let name = self.consume(
+                    scanner::TokenType::Identifier,
+                    "expected token after dot-accessor",
+                )?;
+                exp = expr::Expr::Get {
+                    id: self.get_id(),
+                    object: Box::new(exp),
+                    name,
+                };
             } else {
                 break;
             }

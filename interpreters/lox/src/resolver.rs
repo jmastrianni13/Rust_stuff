@@ -216,6 +216,11 @@ impl Resolver {
 
                 return Ok(());
             }
+            expr::Expr::Get {
+                id: _,
+                object,
+                name: _,
+            } => self.resolve_expr(object),
             expr::Expr::Grouping { id: _, expression } => self.resolve_expr(expression),
             expr::Expr::Literal { id: _, value: _ } => Ok(()),
             expr::Expr::Logical {
