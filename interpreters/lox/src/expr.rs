@@ -39,7 +39,7 @@ pub enum LiteralValue {
     },
     LoxInstance {
         class: Box<LiteralValue>,
-        //fields: Vec<(String, LiteralValue)>,
+        fields: Vec<(String, LiteralValue)>,
     },
 }
 
@@ -97,7 +97,7 @@ impl LiteralValue {
                 fun: _,
             } => format!("{name}/{arity}"),
             LiteralValue::LoxClass { name } => format!("class '{name}'"),
-            LiteralValue::LoxInstance { class } => {
+            LiteralValue::LoxInstance { class, fields: _ } => {
                 format!("instance of '{}'", class_name!(class))
             }
         }
@@ -116,7 +116,7 @@ impl LiteralValue {
                 fun: _,
             } => "Callable",
             LiteralValue::LoxClass { name: _ } => "Class",
-            LiteralValue::LoxInstance { class } => &class_name!(class),
+            LiteralValue::LoxInstance { class, fields: _ } => &class_name!(class),
         }
     }
 
@@ -169,7 +169,10 @@ impl LiteralValue {
                 panic!("cannot use callable as a falsy value")
             }
             LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a falsy value"),
-            LiteralValue::LoxInstance { class: _ } => {
+            LiteralValue::LoxInstance {
+                class: _,
+                fields: _,
+            } => {
                 panic!("cannot use class instance as a falsy value")
             }
         }
@@ -202,7 +205,10 @@ impl LiteralValue {
                 panic!("cannot use callable as a truthy value")
             }
             LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a truthy value"),
-            LiteralValue::LoxInstance { class: _ } => {
+            LiteralValue::LoxInstance {
+                class: _,
+                fields: _,
+            } => {
                 panic!("cannot use class instance as a truthy value")
             }
         }
@@ -480,6 +486,7 @@ impl Expr {
                         }
                         return Ok(LiteralValue::LoxInstance {
                             class: Box::new(callable.clone()),
+                            fields: vec![],
                         });
                     }
                     other => Err(format!("{} is not a callable", other.to_type())),
