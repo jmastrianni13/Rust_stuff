@@ -39,7 +39,7 @@ pub enum LiteralValue {
     },
     LoxInstance {
         class: Box<LiteralValue>,
-        fields: Vec<(String, LiteralValue)>,
+        fields: Rc<RefCell<Vec<(String, LiteralValue)>>>,
     },
 }
 
@@ -519,7 +519,7 @@ impl Expr {
                         }
                         return Ok(LiteralValue::LoxInstance {
                             class: Box::new(callable.clone()),
-                            fields: vec![],
+                            fields: Rc::new(RefCell::new(vec![])),
                         });
                     }
                     other => Err(format!("{} is not a callable", other.to_type())),
@@ -560,9 +560,9 @@ impl Expr {
                 let obj_value = object.evaluate(env.clone(), locals.clone())?;
                 // obj_value should be a LoxInstance
                 if let LiteralValue::LoxInstance { class: _, fields } = obj_value {
-                    for (field_name, value) in fields {
-                        if field_name == name.lexeme {
-                            return Ok(value);
+                    for (field_name, value) in (*fields.borrow()).iter() {
+                        if field_name == &name.lexeme {
+                            return Ok(value.clone());
                         }
                     }
                     Err(format!("no field named {} on this instance", name.lexeme))
@@ -583,21 +583,27 @@ impl Expr {
                 value,
             } => {
                 let obj_value = object.evaluate(env.clone(), locals.clone())?;
-                if let LiteralValue::LoxInstance {
-                    class: _,
-                    mut fields,
-                } = obj_value
-                {
+                if let LiteralValue::LoxInstance { class: _, fields } = obj_value {
                     let value = value.evaluate(env.clone(), locals.clone())?;
 
-                    for i in 0..fields.len() {
-                        let field_name = &fields[i].0;
+                    let mut idx = 0;
+                    let mut found = false;
+                    for i in 0..(*fields.borrow()).len() {
+                        let field_name = &(*fields.borrow())[i].0;
                         if field_name == &name.lexeme {
-                            fields[i].1 = value.clone();
+                            //fields[i].1 = value.clone();
+                            idx = i;
+                            found = true;
+                            break;
                         }
                     }
 
-                    fields.push((name.lexeme.clone(), value));
+                    if found {
+                        (*fields.borrow_mut())[idx].1 = value.clone();
+                    } else {
+                        (*fields.borrow_mut()).push((name.lexeme.clone(), value));
+                    }
+
                     return Ok(expr::LiteralValue::Nil);
                 } else {
                     Err(format!(
