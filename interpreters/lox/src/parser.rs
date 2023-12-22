@@ -404,6 +404,16 @@ impl Parser {
                         value: Box::from(value),
                     });
                 }
+                expr::Expr::Get {
+                    id: _,
+                    object,
+                    name,
+                } => Ok(expr::Expr::Set {
+                    id: self.get_id(),
+                    object,
+                    name,
+                    value: Box::new(value),
+                }),
                 _ => Err("invalid assignment target.".to_string()),
             }
         } else {

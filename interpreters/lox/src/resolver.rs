@@ -232,6 +232,15 @@ impl Resolver {
                 self.resolve_expr(left)?;
                 return self.resolve_expr(right);
             }
+            expr::Expr::Set {
+                id: _,
+                object,
+                name: _,
+                value,
+            } => {
+                self.resolve_expr(object)?;
+                self.resolve_expr(value)
+            }
             expr::Expr::Unary {
                 id: _,
                 operator: _,

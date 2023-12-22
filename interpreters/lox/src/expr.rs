@@ -282,6 +282,12 @@ pub enum Expr {
         operator: scanner::Token,
         right: Box<Expr>,
     },
+    Set {
+        id: usize,
+        object: Box<Expr>,
+        name: scanner::Token,
+        value: Box<Expr>,
+    },
     Unary {
         id: usize,
         operator: scanner::Token,
@@ -331,6 +337,12 @@ impl Expr {
                 left: _,
                 operator: _,
                 right: _,
+            } => *id,
+            Expr::Set {
+                id,
+                object: _,
+                name: _,
+                value: _,
             } => *id,
             Expr::Unary {
                 id,
@@ -388,6 +400,12 @@ impl Expr {
                 left.to_string(),
                 right.to_string()
             ),
+            Expr::Set {
+                id: _,
+                object,
+                name,
+                value,
+            } => format!("(set {} {} to {:?}", object.to_string(), name.lexeme, value),
             Expr::Unary {
                 id: _,
                 operator,
@@ -557,6 +575,36 @@ impl Expr {
             }
             Expr::Grouping { id: _, expression } => {
                 expression.evaluate(env.clone(), locals.clone())
+            }
+            Expr::Set {
+                id: _,
+                object,
+                name,
+                value,
+            } => {
+                let obj_value = object.evaluate(env.clone(), locals.clone())?;
+                if let LiteralValue::LoxInstance {
+                    class: _,
+                    mut fields,
+                } = obj_value
+                {
+                    let value = value.evaluate(env.clone(), locals.clone())?;
+
+                    for i in 0..fields.len() {
+                        let field_name = &fields[i].0;
+                        if field_name == &name.lexeme {
+                            fields[i].1 = value.clone();
+                        }
+                    }
+
+                    fields.push((name.lexeme.clone(), value));
+                    return Ok(expr::LiteralValue::Nil);
+                } else {
+                    Err(format!(
+                        "cannot set property on type {}",
+                        obj_value.to_type()
+                    ))
+                }
             }
             Expr::Unary {
                 id: _,
