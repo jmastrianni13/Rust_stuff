@@ -48,20 +48,19 @@ fn main() {
 }
 
 pub fn run_file(path: &str) -> Result<(), String> {
-    let interp = Rc::new(RefCell::new(interpreter::Interpreter::new()));
     match fs::read_to_string(path) {
         Err(msg) => return Err(msg.to_string()),
-        Ok(contents) => return run(interp, &contents),
+        Ok(contents) => return run_string(&contents),
     }
 }
 
 pub fn run_string(contents: &str) -> Result<(), String> {
-    let interpreter = Rc::new(RefCell::new(interpreter::Interpreter::new()));
-    return run(interpreter, contents);
+    let mut interpreter = interpreter::Interpreter::new();
+    return run(&mut interpreter, contents);
 }
 
 fn run_prompt() -> Result<(), String> {
-    let interp = Rc::new(RefCell::new(interpreter::Interpreter::new()));
+    let mut interp = interpreter::Interpreter::new();
     let mut buffer = String::new();
     loop {
         print!("> ");
@@ -83,14 +82,14 @@ fn run_prompt() -> Result<(), String> {
         }
 
         println!("got: {}", &buffer[current_length..]);
-        match run(interp.clone(), &buffer[current_length..]) {
+        match run(&mut interp, &buffer[current_length..]) {
             Ok(_) => (),
             Err(msg) => println!("{}", msg),
         }
     }
 }
 
-fn run(interp: Rc<RefCell<interpreter::Interpreter>>, contents: &str) -> Result<(), String> {
+fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), String> {
     let mut scanner = scanner::Scanner::new(contents);
     let tokens = scanner.scan_tokens()?;
 
@@ -99,8 +98,8 @@ fn run(interp: Rc<RefCell<interpreter::Interpreter>>, contents: &str) -> Result<
     let resolver = resolver::Resolver::new();
     let locals = resolver.resolve(&statements.iter().collect())?;
 
-    interp.borrow_mut().locals = Rc::new(RefCell::new(locals));
+    interp.locals = Rc::new(RefCell::new(locals));
 
-    interp.borrow_mut().interpret(statements.iter().collect())?;
+    interp.interpret(statements.iter().collect())?;
     return Ok(());
 }
