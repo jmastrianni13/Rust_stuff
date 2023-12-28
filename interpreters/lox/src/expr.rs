@@ -421,7 +421,7 @@ impl Expr {
 
     pub fn evaluate(
         &self,
-        env: Rc<RefCell<environment::Environment>>,
+        env: environment::Environment,
         locals: Rc<RefCell<HashMap<usize, usize>>>,
     ) -> Result<LiteralValue, String> {
         match self {
@@ -432,7 +432,6 @@ impl Expr {
                 body,
             } => {
                 let arity = arguments.len();
-                let env_clone = env.clone();
                 let locals = locals.clone();
                 let arguments: Vec<scanner::Token> =
                     arguments.iter().map(|t| (*t).clone()).collect();
@@ -440,11 +439,10 @@ impl Expr {
                 let paren = paren.clone();
                 let fun_impl = move |args: &Vec<LiteralValue>| {
                     let mut anon_int =
-                        interpreter::Interpreter::for_anon(env_clone.clone(), locals.clone());
+                        interpreter::Interpreter::for_anon(env.clone(), locals.clone());
                     for (i, arg) in args.iter().enumerate() {
                         anon_int
                             .environment
-                            .borrow_mut()
                             .define(arguments[i].lexeme.clone(), (*arg).clone());
                     }
 
@@ -471,9 +469,7 @@ impl Expr {
             Expr::Assign { id: _, name, value } => {
                 let distance = locals.borrow().get(&self.get_id()).cloned();
                 let new_value = (*value).evaluate(env.clone(), locals.clone())?;
-                let assign_success =
-                    env.borrow_mut()
-                        .assign(&name.lexeme, new_value.clone(), distance);
+                let assign_success = env.assign(&name.lexeme, new_value.clone(), distance);
                 if assign_success {
                     return Ok(new_value);
                 } else {
@@ -482,7 +478,7 @@ impl Expr {
             }
             Expr::Variable { id: _, name } => {
                 let distance = locals.borrow().get(&self.get_id()).cloned();
-                match env.borrow().get(&name.lexeme, distance) {
+                match env.get(&name.lexeme, distance) {
                     Some(value) => Ok(value.clone()),
                     None => Err(format!("variable '{}' has not been declared", name.lexeme)),
                 }

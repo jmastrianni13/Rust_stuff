@@ -8,7 +8,7 @@ use std::rc::Rc;
 
 pub struct Interpreter {
     pub specials: Rc<RefCell<HashMap<String, expr::LiteralValue>>>,
-    pub environment: Rc<RefCell<environment::Environment>>,
+    pub environment: environment::Environment,
     pub locals: Rc<RefCell<HashMap<usize, usize>>>,
 }
 
@@ -16,17 +16,17 @@ impl Interpreter {
     pub fn new() -> Self {
         return Self {
             specials: Rc::new(RefCell::new(HashMap::new())),
-            environment: Rc::new(RefCell::new(environment::Environment::new())),
+            environment: environment::Environment::new(),
             locals: Rc::new(RefCell::new(HashMap::new())),
         };
     }
 
     fn for_closure(
-        parent: Rc<RefCell<environment::Environment>>,
+        parent: environment::Environment,
         locals: Rc<RefCell<HashMap<usize, usize>>>,
     ) -> Self {
-        let environment = Rc::new(RefCell::new(environment::Environment::new()));
-        environment.borrow_mut().enclosing = Some(parent);
+        let mut environment = environment::Environment::new();
+        environment.enclosing = Some(Box::new(parent));
 
         return Self {
             specials: Rc::new(RefCell::new(HashMap::new())),
@@ -36,14 +36,14 @@ impl Interpreter {
     }
 
     pub fn for_anon(
-        parent: Rc<RefCell<environment::Environment>>,
+        parent: environment::Environment,
         locals: Rc<RefCell<HashMap<usize, usize>>>,
     ) -> Self {
         let mut env = environment::Environment::new();
-        env.enclosing = Some(parent);
+        env.enclosing = Some(Box::new(parent));
         return Self {
             specials: Rc::new(RefCell::new(HashMap::new())),
-            environment: Rc::new(RefCell::new(env)),
+            environment: env,
             locals,
         };
     }
@@ -63,16 +63,14 @@ impl Interpreter {
                     let value =
                         initializer.evaluate(self.environment.clone(), self.locals.clone())?;
 
-                    self.environment
-                        .borrow_mut()
-                        .define(name.lexeme.clone(), value);
+                    self.environment.define(name.lexeme.clone(), value);
                 }
                 stmt::Stmt::Block { statements } => {
                     let mut new_environment = environment::Environment::new();
-                    new_environment.enclosing = Some(self.environment.clone());
+                    new_environment.enclosing = Some(Box::new(self.environment.clone()));
 
                     let old_environment = self.environment.clone();
-                    self.environment = Rc::new(RefCell::new(new_environment));
+                    self.environment = new_environment;
                     let block_result =
                         self.interpret((*statements).iter().map(|b| b.as_ref()).collect());
                     self.environment = old_environment;
@@ -81,16 +79,11 @@ impl Interpreter {
                 }
                 stmt::Stmt::Class { name, methods: _ } => {
                     self.environment
-                        .borrow_mut()
                         .define(name.lexeme.clone(), expr::LiteralValue::Nil);
                     let klass = expr::LiteralValue::LoxClass {
                         name: name.lexeme.clone(),
                     };
-                    if !self
-                        .environment
-                        .borrow_mut()
-                        .assign(&name.lexeme, klass, None)
-                    {
+                    if !self.environment.assign(&name.lexeme, klass, None) {
                         return Err(format!("class definition failed for {}", name.lexeme));
                     }
                 }
@@ -136,7 +129,6 @@ impl Interpreter {
                         for (i, arg) in args.iter().enumerate() {
                             clos_int
                                 .environment
-                                .borrow_mut()
                                 .define(params[i].lexeme.clone(), (*arg).clone());
                         }
 
@@ -159,9 +151,7 @@ impl Interpreter {
                         fun: Rc::new(fun_impl),
                     };
 
-                    self.environment
-                        .borrow_mut()
-                        .define(name.lexeme.clone(), callable);
+                    self.environment.define(name.lexeme.clone(), callable);
                 }
                 stmt::Stmt::ReturnStmt { keyword: _, value } => {
                     let eval_val;
