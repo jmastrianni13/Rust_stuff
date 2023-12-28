@@ -167,9 +167,4 @@ impl Interpreter {
 
         return Ok(());
     }
-
-    pub fn resolve(&mut self, id: usize, steps: usize) -> Result<(), String> {
-        self.locals.borrow_mut().insert(id, steps);
-        return Ok(());
-    }
 }

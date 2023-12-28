@@ -96,8 +96,10 @@ fn run(interp: Rc<RefCell<interpreter::Interpreter>>, contents: &str) -> Result<
 
     let mut parser = parser::Parser::new(tokens);
     let statements = parser.parse()?;
-    let mut resolver = resolver::Resolver::new(interp.clone());
-    resolver.resolve_many(&statements.iter().collect())?;
+    let resolver = resolver::Resolver::new();
+    let locals = resolver.resolve(&statements.iter().collect())?;
+
+    interp.borrow_mut().locals = Rc::new(RefCell::new(locals));
 
     interp.borrow_mut().interpret(statements.iter().collect())?;
     return Ok(());

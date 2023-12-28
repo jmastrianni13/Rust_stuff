@@ -1,10 +1,7 @@
 use crate::expr;
-use crate::interpreter;
 use crate::scanner;
 use crate::stmt;
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 #[derive(Clone, Copy, PartialEq)]
 enum FunctionType {
@@ -14,21 +11,26 @@ enum FunctionType {
 
 #[allow(dead_code)]
 pub struct Resolver {
-    pub interp: Rc<RefCell<interpreter::Interpreter>>,
     scopes: Vec<HashMap<String, bool>>,
     current_function: FunctionType,
+    locals: HashMap<usize, usize>,
 }
 
 impl Resolver {
-    pub fn new(interp: Rc<RefCell<interpreter::Interpreter>>) -> Self {
+    pub fn new() -> Self {
         return Self {
-            interp,
             scopes: vec![],
             current_function: FunctionType::None,
+            locals: HashMap::new(),
         };
     }
 
-    pub fn resolve(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
+    pub fn resolve(mut self, stms: &Vec<&stmt::Stmt>) -> Result<HashMap<usize, usize>, String> {
+        self.resolve_many(stms)?;
+        return Ok(self.locals);
+    }
+
+    fn resolve_internal(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
         match stm {
             stmt::Stmt::Block { statements: _ } => self.resolve_block(stm)?,
             stmt::Stmt::Var {
@@ -62,16 +64,16 @@ impl Resolver {
             }
             stmt::Stmt::WhileStmt { condition, body } => {
                 self.resolve_expr(condition)?;
-                self.resolve(body.as_ref())?;
+                self.resolve_internal(body.as_ref())?;
             }
         }
 
         return Ok(());
     }
 
-    pub fn resolve_many(&mut self, stmts: &Vec<&stmt::Stmt>) -> Result<(), String> {
+    fn resolve_many(&mut self, stmts: &Vec<&stmt::Stmt>) -> Result<(), String> {
         for stm in stmts {
-            self.resolve(stm)?;
+            self.resolve_internal(stm)?;
         }
         return Ok(());
     }
@@ -143,9 +145,9 @@ impl Resolver {
         } = stm
         {
             self.resolve_expr(predicate)?;
-            self.resolve(then.as_ref())?;
+            self.resolve_internal(then.as_ref())?;
             if let Some(els) = els {
-                self.resolve(els.as_ref())?;
+                self.resolve_internal(els.as_ref())?;
             }
 
             return Ok(());
@@ -291,7 +293,7 @@ impl Resolver {
         for i in (0..=(size - 1)).rev() {
             let scope = &self.scopes[i];
             if scope.contains_key(&name.lexeme) {
-                self.interp.borrow_mut().resolve(resolve_id, size - 1 - i)?;
+                self.locals.insert(resolve_id, size - 1 - i);
                 return Ok(());
             }
         }

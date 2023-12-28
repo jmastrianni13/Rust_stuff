@@ -29,6 +29,7 @@ fn clock_impl(_args: &Vec<expr::LiteralValue>) -> expr::LiteralValue {
 #[derive(Clone)]
 pub struct Environment {
     values: Rc<RefCell<HashMap<String, expr::LiteralValue>>>,
+    // locals: Rc<RefCell<HashMap<usize, usize>>>,
     pub enclosing: Option<Box<Environment>>,
 }
 
