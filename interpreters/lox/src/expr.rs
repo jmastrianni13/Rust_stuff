@@ -452,7 +452,7 @@ impl Expr {
                             paren.line_number
                         ));
 
-                        if let Some(value) = anon_int.specials.borrow().get("return") {
+                        if let Some(value) = anon_int.specials.get("return") {
                             return value.clone();
                         }
                     }

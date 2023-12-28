@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Interpreter {
-    pub specials: Rc<RefCell<HashMap<String, expr::LiteralValue>>>,
+    pub specials: HashMap<String, expr::LiteralValue>,
     pub environment: environment::Environment,
     pub locals: Rc<RefCell<HashMap<usize, usize>>>,
 }
@@ -15,7 +15,7 @@ pub struct Interpreter {
 impl Interpreter {
     pub fn new() -> Self {
         return Self {
-            specials: Rc::new(RefCell::new(HashMap::new())),
+            specials: HashMap::new(),
             environment: environment::Environment::new(),
             locals: Rc::new(RefCell::new(HashMap::new())),
         };
@@ -29,7 +29,7 @@ impl Interpreter {
         environment.enclosing = Some(Box::new(parent));
 
         return Self {
-            specials: Rc::new(RefCell::new(HashMap::new())),
+            specials: HashMap::new(),
             environment,
             locals,
         };
@@ -42,7 +42,7 @@ impl Interpreter {
         let mut env = environment::Environment::new();
         env.enclosing = Some(Box::new(parent));
         return Self {
-            specials: Rc::new(RefCell::new(HashMap::new())),
+            specials: HashMap::new(),
             environment: env,
             locals,
         };
@@ -137,7 +137,7 @@ impl Interpreter {
                                 .interpret(vec![body[i].as_ref()])
                                 .expect(&format!("evaluating failed inside {}", name_clone));
 
-                            if let Some(value) = clos_int.specials.borrow().get("return") {
+                            if let Some(value) = clos_int.specials.get("return") {
                                 return value.clone();
                             }
                         }
@@ -160,9 +160,7 @@ impl Interpreter {
                     } else {
                         eval_val = expr::LiteralValue::Nil;
                     }
-                    self.specials
-                        .borrow_mut()
-                        .insert("return".to_string(), eval_val);
+                    self.specials.insert("return".to_string(), eval_val);
                 }
             };
         }
