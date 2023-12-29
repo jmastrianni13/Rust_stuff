@@ -72,8 +72,11 @@ fn run_prompt() -> Result<(), String> {
         let current_length = buffer.len();
         match handle.read_line(&mut buffer) {
             Ok(n) => {
-                if n < 1 {
+                if n == 0 {
+                    println!("");
                     return Ok(());
+                } else if n == 1 {
+                    continue;
                 }
             }
             Err(_) => return Err("count not read line".to_string()),

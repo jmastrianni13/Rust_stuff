@@ -12,17 +12,16 @@ mod tests {
         for case in cases {
             let case = case.unwrap();
             let name = case.path().display().to_string();
-            println!("> testing {name}");
             if name.contains(".swp") {
                 continue;
             }
             match run_test(case) {
                 Ok(_) => {
-                    msgs.push(format!("Running {name:.<85}...ok"));
+                    msgs.push(format!("Running {name:.<50}...ok"));
                 }
                 Err(msg) => {
                     errors.push(msg);
-                    msgs.push(format!("Running {name:.<85}...failed"));
+                    msgs.push(format!("Running {name:.<50}...failed"));
                 }
             }
         }
