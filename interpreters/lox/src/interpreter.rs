@@ -2,49 +2,40 @@ use crate::environment;
 use crate::expr;
 use crate::scanner;
 use crate::stmt;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 pub struct Interpreter {
     pub specials: HashMap<String, expr::LiteralValue>,
     pub environment: environment::Environment,
-    pub locals: Rc<RefCell<HashMap<usize, usize>>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         return Self {
             specials: HashMap::new(),
-            environment: environment::Environment::new(),
-            locals: Rc::new(RefCell::new(HashMap::new())),
+            environment: environment::Environment::new(HashMap::new()),
         };
     }
 
-    fn for_closure(
-        parent: environment::Environment,
-        locals: Rc<RefCell<HashMap<usize, usize>>>,
-    ) -> Self {
-        let mut environment = environment::Environment::new();
-        environment.enclosing = Some(Box::new(parent));
+    pub fn resolve(&mut self, locals: HashMap<usize, usize>) {
+        self.environment.resolve(locals);
+    }
+
+    fn for_closure(parent: environment::Environment) -> Self {
+        let environment = parent.enclose();
 
         return Self {
             specials: HashMap::new(),
             environment,
-            locals,
         };
     }
 
-    pub fn for_anon(
-        parent: environment::Environment,
-        locals: Rc<RefCell<HashMap<usize, usize>>>,
-    ) -> Self {
-        let mut env = environment::Environment::new();
-        env.enclosing = Some(Box::new(parent));
+    pub fn for_anon(parent: environment::Environment) -> Self {
+        let env = parent.enclose();
         return Self {
             specials: HashMap::new(),
             environment: env,
-            locals,
         };
     }
 
@@ -52,22 +43,19 @@ impl Interpreter {
         for stmt in stmts {
             match stmt {
                 stmt::Stmt::Expression { expression } => {
-                    expression.evaluate(self.environment.clone(), self.locals.clone())?;
+                    expression.evaluate(self.environment.clone())?;
                 }
                 stmt::Stmt::Print { expression } => {
-                    let value =
-                        expression.evaluate(self.environment.clone(), self.locals.clone())?;
+                    let value = expression.evaluate(self.environment.clone())?;
                     println!("{}", value.to_string());
                 }
                 stmt::Stmt::Var { name, initializer } => {
-                    let value =
-                        initializer.evaluate(self.environment.clone(), self.locals.clone())?;
+                    let value = initializer.evaluate(self.environment.clone())?;
 
                     self.environment.define(name.lexeme.clone(), value);
                 }
                 stmt::Stmt::Block { statements } => {
-                    let mut new_environment = environment::Environment::new();
-                    new_environment.enclosing = Some(Box::new(self.environment.clone()));
+                    let new_environment = self.environment.enclose();
 
                     let old_environment = self.environment.clone();
                     self.environment = new_environment;
@@ -83,7 +71,7 @@ impl Interpreter {
                     let klass = expr::LiteralValue::LoxClass {
                         name: name.lexeme.clone(),
                     };
-                    if !self.environment.assign(&name.lexeme, klass, None) {
+                    if !self.environment.assign_global(&name.lexeme, klass) {
                         return Err(format!("class definition failed for {}", name.lexeme));
                     }
                 }
@@ -92,8 +80,7 @@ impl Interpreter {
                     then,
                     els,
                 } => {
-                    let truth_value =
-                        predicate.evaluate(self.environment.clone(), self.locals.clone())?;
+                    let truth_value = predicate.evaluate(self.environment.clone())?;
                     if truth_value.is_truthy() == expr::LiteralValue::True {
                         let statements = vec![then.as_ref()];
                         self.interpret(statements)?;
@@ -103,12 +90,11 @@ impl Interpreter {
                     }
                 }
                 stmt::Stmt::WhileStmt { condition, body } => {
-                    let mut flag =
-                        condition.evaluate(self.environment.clone(), self.locals.clone())?;
+                    let mut flag = condition.evaluate(self.environment.clone())?;
                     while flag.is_truthy() == expr::LiteralValue::True {
                         let statements = vec![body.as_ref()];
                         self.interpret(statements)?;
-                        flag = condition.evaluate(self.environment.clone(), self.locals.clone())?;
+                        flag = condition.evaluate(self.environment.clone())?;
                     }
                 }
                 stmt::Stmt::Function { name, params, body } => {
@@ -121,10 +107,9 @@ impl Interpreter {
                     let name_clone = name.lexeme.clone();
 
                     let parent_env = self.environment.clone();
-                    let parent_locals = self.locals.clone();
+                    // let parent_locals = self.locals.clone();
                     let fun_impl = move |args: &Vec<expr::LiteralValue>| {
-                        let mut clos_int =
-                            Interpreter::for_closure(parent_env.clone(), parent_locals.clone());
+                        let mut clos_int = Interpreter::for_closure(parent_env.clone());
 
                         for (i, arg) in args.iter().enumerate() {
                             clos_int
@@ -156,7 +141,7 @@ impl Interpreter {
                 stmt::Stmt::ReturnStmt { keyword: _, value } => {
                     let eval_val;
                     if let Some(value) = value {
-                        eval_val = value.evaluate(self.environment.clone(), self.locals.clone())?;
+                        eval_val = value.evaluate(self.environment.clone())?;
                     } else {
                         eval_val = expr::LiteralValue::Nil;
                     }

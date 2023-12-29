@@ -7,12 +7,10 @@ mod scanner;
 mod stmt;
 mod tests;
 
-use std::cell::RefCell;
 use std::env;
 use std::fs;
 use std::io::{self, BufRead, Write};
 use std::process;
-use std::rc::Rc;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -98,7 +96,7 @@ fn run(interp: &mut interpreter::Interpreter, contents: &str) -> Result<(), Stri
     let resolver = resolver::Resolver::new();
     let locals = resolver.resolve(&statements.iter().collect())?;
 
-    interp.locals = Rc::new(RefCell::new(locals));
+    interp.resolve(locals);
 
     interp.interpret(statements.iter().collect())?;
     return Ok(());
