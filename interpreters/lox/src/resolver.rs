@@ -7,6 +7,7 @@ use std::collections::HashMap;
 enum FunctionType {
     None,
     Function,
+    Method,
 }
 
 #[allow(dead_code)]
@@ -37,7 +38,11 @@ impl Resolver {
                 name: _,
                 initializer: _,
             } => self.resolve_var(stm)?,
-            stmt::Stmt::Class { name, methods: _ } => {
+            stmt::Stmt::Class { name, methods } => {
+                for method in methods {
+                    let declaration = FunctionType::Method;
+                    self.resolve_function(method, declaration);
+                }
                 self.declare(name)?;
                 self.define(name);
             }
@@ -45,7 +50,7 @@ impl Resolver {
                 name: _,
                 params: _,
                 body: _,
-            } => self.resolve_function(stm)?,
+            } => self.resolve_function(stm, FunctionType::Function)?,
             stmt::Stmt::Expression { expression } => self.resolve_expr(expression)?,
             stmt::Stmt::IfStmt {
                 predicate: _,
@@ -101,7 +106,7 @@ impl Resolver {
         return Ok(());
     }
 
-    fn resolve_function(&mut self, stm: &stmt::Stmt) -> Result<(), String> {
+    fn resolve_function(&mut self, stm: &stmt::Stmt, fn_type: FunctionType) -> Result<(), String> {
         if let stmt::Stmt::Function { name, params, body } = stm {
             self.declare(name)?;
             self.define(name);
@@ -109,7 +114,7 @@ impl Resolver {
             self.resolve_function_helper(
                 params,
                 &body.iter().map(|b| b.as_ref()).collect(),
-                FunctionType::Function,
+                fn_type,
             )
         } else {
             panic!("incorrect type in resolve function");
