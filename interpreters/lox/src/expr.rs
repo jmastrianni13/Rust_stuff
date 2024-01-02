@@ -4,6 +4,7 @@ use crate::interpreter;
 use crate::scanner;
 use crate::stmt;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 fn unwrap_as_f64(literal: Option<scanner::LiteralValue>) -> f64 {
@@ -34,6 +35,7 @@ pub enum LiteralValue {
     },
     LoxClass {
         name: String,
+        methods: HashMap<String, LiteralValue>,
         // methods: Vec<(String, LiteralValue)>, // TODO Could also add static fields?
     },
     LoxInstance {
@@ -74,7 +76,7 @@ impl PartialEq for LiteralValue {
 
 macro_rules! class_name {
     ($class:expr) => {{
-        if let LiteralValue::LoxClass { name } = &**$class {
+        if let LiteralValue::LoxClass { name, methods: _ } = &**$class {
             name
         } else {
             panic!("unreachable")
@@ -95,7 +97,7 @@ impl LiteralValue {
                 arity,
                 fun: _,
             } => format!("{name}/{arity}"),
-            LiteralValue::LoxClass { name } => format!("class '{name}'"),
+            LiteralValue::LoxClass { name, methods: _ } => format!("class '{name}'"),
             LiteralValue::LoxInstance { class, fields: _ } => {
                 format!("instance of '{}'", class_name!(class))
             }
@@ -114,7 +116,10 @@ impl LiteralValue {
                 arity: _,
                 fun: _,
             } => "Callable",
-            LiteralValue::LoxClass { name: _ } => "Class",
+            LiteralValue::LoxClass {
+                name: _,
+                methods: _,
+            } => "Class",
             LiteralValue::LoxInstance { class, fields: _ } => &class_name!(class),
         }
     }
@@ -167,7 +172,10 @@ impl LiteralValue {
             } => {
                 panic!("cannot use callable as a falsy value")
             }
-            LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a falsy value"),
+            LiteralValue::LoxClass {
+                name: _,
+                methods: _,
+            } => panic!("cannot use class as a falsy value"),
             LiteralValue::LoxInstance {
                 class: _,
                 fields: _,
@@ -203,7 +211,10 @@ impl LiteralValue {
             } => {
                 panic!("cannot use callable as a truthy value")
             }
-            LiteralValue::LoxClass { name: _ } => panic!("cannot use class as a truthy value"),
+            LiteralValue::LoxClass {
+                name: _,
+                methods: _,
+            } => panic!("cannot use class as a truthy value"),
             LiteralValue::LoxInstance {
                 class: _,
                 fields: _,
@@ -496,7 +507,10 @@ impl Expr {
                         }
                         return Ok(fun(&arg_vals));
                     }
-                    LiteralValue::LoxClass { name: _ } => {
+                    LiteralValue::LoxClass {
+                        name: _,
+                        methods: _,
+                    } => {
                         if arguments.len() != 0 {
                             return Err(
                                 "can only call the constructor with zero arguments".to_string()
