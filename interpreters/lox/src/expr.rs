@@ -558,11 +558,18 @@ impl Expr {
             } => {
                 let obj_value = object.evaluate(env.clone())?;
                 // obj_value should be a LoxInstance
-                if let LiteralValue::LoxInstance { class: _, fields } = obj_value {
+                if let LiteralValue::LoxInstance { class, fields } = obj_value {
                     for (field_name, value) in (*fields.borrow()).iter() {
                         if field_name == &name.lexeme {
                             return Ok(value.clone());
                         }
+                    }
+                    if let LiteralValue::LoxClass { name: _, methods } = class.as_ref() {
+                        if let Some(method) = methods.get(&name.lexeme) {
+                            return Ok(method.clone());
+                        }
+                    } else {
+                        panic!("the class field on an instance was not a LoxClass");
                     }
                     Err(format!("no field named {} on this instance", name.lexeme))
                 } else {
