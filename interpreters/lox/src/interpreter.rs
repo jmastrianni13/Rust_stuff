@@ -65,11 +65,28 @@ impl Interpreter {
 
                     block_result?; // compiler complains if return keyword is used here
                 }
-                stmt::Stmt::Class { name, methods: _ } => {
+                stmt::Stmt::Class { name, methods } => {
                     self.environment
                         .define(name.lexeme.clone(), expr::LiteralValue::Nil);
+
+                    let mut methods_map = HashMap::new();
+                    for method in methods {
+                        if let stmt::Stmt::Function {
+                            name,
+                            params: _,
+                            body: _,
+                        } = method.as_ref()
+                        {
+                            let function = self.make_function(method);
+                            methods_map.insert(name.lexeme.clone(), function);
+                        } else {
+                            panic!("class method expects function type");
+                        }
+                    }
+
                     let klass = expr::LiteralValue::LoxClass {
                         name: name.lexeme.clone(),
+                        methods: methods_map,
                     };
                     if !self.environment.assign_global(&name.lexeme, klass) {
                         return Err(format!("class definition failed for {}", name.lexeme));
@@ -97,45 +114,12 @@ impl Interpreter {
                         flag = condition.evaluate(self.environment.clone())?;
                     }
                 }
-                stmt::Stmt::Function { name, params, body } => {
-                    let arity = params.len();
-
-                    let params: Vec<scanner::Token> = params.iter().map(|t| (*t).clone()).collect();
-
-                    let body: Vec<Box<stmt::Stmt>> = body.iter().map(|b| (*b).clone()).collect();
-
-                    let name_clone = name.lexeme.clone();
-
-                    let parent_env = self.environment.clone();
-                    // let parent_locals = self.locals.clone();
-                    let fun_impl = move |args: &Vec<expr::LiteralValue>| {
-                        let mut clos_int = Interpreter::for_closure(parent_env.clone());
-
-                        for (i, arg) in args.iter().enumerate() {
-                            clos_int
-                                .environment
-                                .define(params[i].lexeme.clone(), (*arg).clone());
-                        }
-
-                        for i in 0..(body.len()) {
-                            clos_int
-                                .interpret(vec![body[i].as_ref()])
-                                .expect(&format!("evaluating failed inside {}", name_clone));
-
-                            if let Some(value) = clos_int.specials.get("return") {
-                                return value.clone();
-                            }
-                        }
-
-                        return expr::LiteralValue::Nil;
-                    };
-
-                    let callable = expr::LiteralValue::Callable {
-                        name: name.lexeme.clone(),
-                        arity,
-                        fun: Rc::new(fun_impl),
-                    };
-
+                stmt::Stmt::Function {
+                    name,
+                    params: _,
+                    body: _,
+                } => {
+                    let callable = self.make_function(stmt);
                     self.environment.define(name.lexeme.clone(), callable);
                 }
                 stmt::Stmt::ReturnStmt { keyword: _, value } => {
@@ -151,5 +135,49 @@ impl Interpreter {
         }
 
         return Ok(());
+    }
+
+    fn make_function(&self, fn_stmt: &stmt::Stmt) -> expr::LiteralValue {
+        if let stmt::Stmt::Function { name, params, body } = fn_stmt {
+            let arity = params.len();
+
+            let params: Vec<scanner::Token> = params.iter().map(|t| (*t).clone()).collect();
+
+            let body: Vec<Box<stmt::Stmt>> = body.iter().map(|b| (*b).clone()).collect();
+
+            let name_clone = name.lexeme.clone();
+
+            let parent_env = self.environment.clone();
+            // let parent_locals = self.locals.clone();
+            let fun_impl = move |args: &Vec<expr::LiteralValue>| {
+                let mut clos_int = Interpreter::for_closure(parent_env.clone());
+
+                for (i, arg) in args.iter().enumerate() {
+                    clos_int
+                        .environment
+                        .define(params[i].lexeme.clone(), (*arg).clone());
+                }
+
+                for i in 0..(body.len()) {
+                    clos_int
+                        .interpret(vec![body[i].as_ref()])
+                        .expect(&format!("evaluating failed inside {}", name_clone));
+
+                    if let Some(value) = clos_int.specials.get("return") {
+                        return value.clone();
+                    }
+                }
+
+                return expr::LiteralValue::Nil;
+            };
+
+            return expr::LiteralValue::Callable {
+                name: name.lexeme.clone(),
+                arity,
+                fun: Rc::new(fun_impl),
+            };
+        } else {
+            panic!("trie to make a function from a non-function statement");
+        }
     }
 }

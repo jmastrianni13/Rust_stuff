@@ -41,7 +41,7 @@ impl Resolver {
             stmt::Stmt::Class { name, methods } => {
                 for method in methods {
                     let declaration = FunctionType::Method;
-                    self.resolve_function(method, declaration);
+                    self.resolve_function(method, declaration)?;
                 }
                 self.declare(name)?;
                 self.define(name);
