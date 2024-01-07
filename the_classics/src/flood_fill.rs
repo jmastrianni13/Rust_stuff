@@ -1,4 +1,4 @@
-pub fn main () {
+pub fn main() {
     let grid = get_grid();
     //let mut vec_grid = RefCell::new(convert_grid(grid));
     let mut vec_grid = convert_grid(grid);
@@ -8,7 +8,6 @@ pub fn main () {
         let row_string: String = row.into_iter().collect();
         println!("{:?}", row_string);
     }
-
 }
 
 fn update_grid(vec_grid: &mut Vec<Vec<char>>) -> u8 {
@@ -20,32 +19,32 @@ fn update_grid(vec_grid: &mut Vec<Vec<char>>) -> u8 {
                 floodfill(vec_grid, (x as i32, y as i32), counter);
             }
         }
-    };
-    return counter
+    }
+    return counter;
 }
 
 fn floodfill(vec_grid: &mut Vec<Vec<char>>, pos: (i32, i32), counter: u8) {
     let grid_height = vec_grid.len() as i32;
     let grid_width = vec_grid[0].len() as i32;
     let (x, y) = pos;
-    
+
     if vec_grid[y as usize][x as usize] != '.' {
-        return
+        return;
     }
-    
+
     vec_grid[y as usize][x as usize] = char::from_digit(counter as u32, 10).unwrap();
-    
+
     if x + 1 < grid_width {
-        floodfill(vec_grid, (x+1, y), counter);
+        floodfill(vec_grid, (x + 1, y), counter);
     }
     if y + 1 < grid_height {
-        floodfill(vec_grid, (x, y+1), counter);
+        floodfill(vec_grid, (x, y + 1), counter);
     }
     if x - 1 >= 0 {
-        floodfill(vec_grid, (x-1, y), counter);
+        floodfill(vec_grid, (x - 1, y), counter);
     }
     if y - 1 >= 0 {
-        floodfill(vec_grid, (x, y-1), counter);
+        floodfill(vec_grid, (x, y - 1), counter);
     }
 }
 
@@ -66,5 +65,6 @@ fn get_grid() -> String {
 .......#....#....####...#..........#....##......#
 .......#....#....#......############.....##.....#
 .......######....#........................##....#
-.................####........####..........######".to_string();
+.................####........####..........######"
+        .to_string();
 }
