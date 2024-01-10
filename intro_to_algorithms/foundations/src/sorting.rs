@@ -27,40 +27,44 @@ pub fn insertion_sort_dec(items: &mut Vec<i32>) {
 }
 
 fn merge_sort(items: &mut Vec<i32>, p: usize, r: usize) {
-    if p >= r {
+    if p + 1 >= r {
         return;
     }
 
     let q = (p + r) / 2;
     merge_sort(items, p, q);
-    merge_sort(items, q+1, r);
+    merge_sort(items, q, r);
     merge(items, p, q, r);
-
 }
 
 fn merge(items: &mut Vec<i32>, p: usize, q: usize, r: usize) {
-    let nl = q - p + 1; 
+    println!("\nmerge started p={p} q={q} r={r}");
+    println!("pre merge: {:?}\n", items);
+    let nl = q - p;
     let nr = r - q;
 
-    let mut l_items = vec![0; nl];
-    let mut r_items = vec![0; nr];
+    let mut l_items: Vec<i32> = vec![];
+    let mut r_items: Vec<i32> = vec![];
 
-    for i in 0..nl-1 {
-        l_items[i] = items[p+i];
+    for i in 0..nl {
+        l_items.push(items[p + i]);
     }
-    for j in 0..nr-1 {
-        r_items[j] = items[q + j + 1];
+    for j in 0..nr {
+        r_items.push(items[q + j]);
     }
 
+    println!("{:?} | {:?} | {:?}", l_items, items, r_items);
     let mut i = 0;
     let mut j = 0;
     let mut k = p;
 
     while i < nl && j < nr {
         if l_items[i] <= r_items[j] {
+            println!("> inserting {:?}", l_items[i]);
             items[k] = l_items[i];
             i += 1;
         } else {
+            println!("> inserting {:?}", r_items[j]);
             items[k] = r_items[j];
             j += 1;
         }
@@ -69,16 +73,19 @@ fn merge(items: &mut Vec<i32>, p: usize, q: usize, r: usize) {
 
     while i < nl {
         items[k] = l_items[i];
+        println!("> inserting {:?}", l_items[i]);
         i += 1;
         k += 1;
     }
 
     while j < nr {
+        println!("> inserting {:?}", r_items[j]);
         items[k] = r_items[j];
         j += 1;
         k += 1;
     }
 
+    println!("\npost merge: {:?}", items);
 }
 
 #[cfg(test)]
@@ -117,14 +124,20 @@ mod tests {
 
     #[test]
     fn test_merge_sort() {
-        // let mut items: Vec<i32> = vec![];
-        // merge_sort(&mut items, 0, 0);
-        // assert_eq!(vec![] as Vec<i32>, items);
+        let mut items: Vec<i32> = vec![];
+        merge_sort(&mut items, 0, 0);
+        assert_eq!(vec![] as Vec<i32>, items);
 
         let mut items: Vec<i32> = vec![5, 4, 2, 6, 1, 3];
         let p = 0;
         let r = items.len();
         merge_sort(&mut items, p, r);
         assert_eq!(vec![1, 2, 3, 4, 5, 6], items);
+
+        let mut items: Vec<i32> = vec![12, 3, 7, 9, 14, 6, 11, 2];
+        let p = 0;
+        let r = items.len();
+        merge_sort(&mut items, p, r);
+        assert_eq!(vec![2, 3, 6, 7, 9, 11, 12, 14,], items);
     }
 }
