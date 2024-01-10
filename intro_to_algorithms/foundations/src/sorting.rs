@@ -1,3 +1,16 @@
+pub fn bubble_sort(items: &mut Vec<i32>) {
+    for _ in 0..items.len() {
+        for j in (1..items.len()).rev() {
+            if items[j] < items[j - 1] {
+                let low = items[j];
+                let hi = items[j - 1];
+                items[j] = hi;
+                items[j - 1] = low;
+            }
+        }
+    }
+}
+
 pub fn insertion_sort(items: &mut Vec<i32>) {
     let mut j;
     let mut key;
@@ -138,6 +151,21 @@ mod tests {
         let p = 0;
         let r = items.len();
         merge_sort(&mut items, p, r);
+        assert_eq!(vec![2, 3, 6, 7, 9, 11, 12, 14,], items);
+    }
+
+    #[test]
+    fn test_bubble_sort() {
+        let mut items: Vec<i32> = vec![];
+        bubble_sort(&mut items);
+        assert_eq!(vec![] as Vec<i32>, items);
+
+        let mut items: Vec<i32> = vec![5, 4, 2, 6, 1, 3];
+        bubble_sort(&mut items);
+        assert_eq!(vec![1, 2, 3, 4, 5, 6], items);
+
+        let mut items: Vec<i32> = vec![12, 3, 7, 9, 14, 6, 11, 2];
+        bubble_sort(&mut items);
         assert_eq!(vec![2, 3, 6, 7, 9, 11, 12, 14,], items);
     }
 }
