@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub fn main() {
     let my_node: Node<i32> = Node {
         data: Some(5),
@@ -13,10 +15,21 @@ pub fn main() {
     println!("{:?}", my_sll);
 }
 
-#[derive(Debug)]
 struct Node<T> {
     data: Option<T>,
     next: Option<Box<Node<T>>>,
+}
+
+impl<T> fmt::Debug for Node<T>
+where
+    T: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Node")
+            .field("data", &self.data.as_ref().unwrap())
+            .field("next", &self.next)
+            .finish()
+    }
 }
 
 #[derive(Debug)]
@@ -37,3 +50,4 @@ impl<T> SingleLinkedList<T> {
         self.head = Some(Box::new(new_node));
     }
 }
+
