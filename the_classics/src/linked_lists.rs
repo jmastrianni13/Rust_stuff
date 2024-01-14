@@ -6,7 +6,10 @@ pub fn main() {
 
     println!("{:?}", my_node);
 
-    let my_sll: SingleLinkedList<i32> = SingleLinkedList::new();
+    let mut my_sll: SingleLinkedList<i32> = SingleLinkedList::new();
+    println!("{:?}", my_sll);
+    my_sll.insert(5);
+    my_sll.insert(10);
     println!("{:?}", my_sll);
 }
 
@@ -18,15 +21,19 @@ struct Node<T> {
 
 #[derive(Debug)]
 struct SingleLinkedList<T> {
-    head: Node<T>,
+    head: Option<Box<Node<T>>>,
 }
 
 impl<T> SingleLinkedList<T> {
     pub fn new() -> Self {
-        let head: Node<T> = Node {
-            data: None,
-            next: None,
+        return Self { head: None };
+    }
+
+    pub fn insert(&mut self, data: T) {
+        let new_node = Node {
+            data: Some(data),
+            next: self.head.take(),
         };
-        return Self { head };
+        self.head = Some(Box::new(new_node));
     }
 }
