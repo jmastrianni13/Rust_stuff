@@ -22,6 +22,11 @@ pub fn main() {
     my_sll.insert('b');
     my_sll.insert('a');
     print_sll(&my_sll);
+
+    let contains_a = my_sll.contains(&'a');
+    println!("sll contains a = {contains_a}");
+    let contains_z = my_sll.contains(&'z');
+    println!("sll contains z = {contains_z}");
 }
 
 struct Node<T> {
@@ -46,7 +51,7 @@ struct SingleLinkedList<T> {
     head: Option<Box<Node<T>>>,
 }
 
-impl<T> SingleLinkedList<T> {
+impl<T: std::cmp::PartialEq> SingleLinkedList<T> {
     pub fn new() -> Self {
         return Self { head: None };
     }
@@ -57,6 +62,18 @@ impl<T> SingleLinkedList<T> {
             next: self.head.take(),
         };
         self.head = Some(Box::new(new_node));
+    }
+
+    pub fn contains(&self, val: &T) -> bool {
+        let mut node = &self.head;
+        while let Some(n) = node {
+            if n.data.as_ref() == Some(val) {
+                return true;
+            }
+            node = &n.next;
+        }
+
+        return false;
     }
 }
 
