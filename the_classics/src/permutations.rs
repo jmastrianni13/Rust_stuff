@@ -34,3 +34,16 @@ fn get_permute(seq: &mut [char], i: usize, result: &mut Vec<String>) {
     }
     return;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_permute() {
+        let mut seq: Vec<char> = "abc".chars().collect();
+        let mut permutes: Vec<String> = vec![];
+        get_permute(&mut seq, 0, &mut permutes);
+        assert_eq!(permutes, ["abc", "acb", "bac", "bca", "cba", "cab"]);
+    }
+}
