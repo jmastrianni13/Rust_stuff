@@ -17,11 +17,7 @@ pub extern "C" fn _start() -> ! {
     test_main();
 
     println!("It did not crash!");
-    //loop {}
-    loop {
-        use rOSt::print;
-        print!("-");
-    }
+    rOSt::hlt_loop();
 }
 
 // This function is called on panic
@@ -29,7 +25,7 @@ pub extern "C" fn _start() -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
+    rOSt::hlt_loop();
 }
 
 // This function is called on panic during testing
