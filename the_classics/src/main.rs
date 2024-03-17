@@ -1,7 +1,8 @@
 mod binary_tree;
+mod factorial;
 mod flood_fill;
-mod permutations;
 mod linked_lists;
+mod permutations;
 mod stack;
 
 fn main() {
@@ -10,4 +11,5 @@ fn main() {
     permutations::main();
     linked_lists::main();
     stack::main();
+    factorial::main();
 }
