@@ -4,6 +4,7 @@ mod flood_fill;
 mod linked_lists;
 mod permutations;
 mod stack;
+mod fib;
 
 fn main() {
     binary_tree::main();
@@ -12,4 +13,5 @@ fn main() {
     linked_lists::main();
     stack::main();
     factorial::main();
+    fib::main();
 }
